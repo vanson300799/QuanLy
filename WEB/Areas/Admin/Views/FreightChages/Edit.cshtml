@@ -1,0 +1,219 @@
+﻿@model FreightChageViewModel
+@{
+    var checkEmployee = WEB.WebHelpers.UserInfoHelper.GetUserData().StationID.HasValue;
+    var minDate = ViewBag.notbookDate;
+}
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
+    var parentID = ViewBag.ID;
+}
+
+@using (Html.BeginForm("Edit", "FreightChages", FormMethod.Post, new { @id = "freight", enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+{
+    @Html.HiddenFor(x => x.ID)
+    if (checkEmployee)
+    {
+        @Html.HiddenFor(x => x.StationID)
+    }
+    <div class="validation-group">
+        <div class="controls">
+            @Html.ValidationSummary(true)
+        </div>
+    </div>
+    <div class="row">
+        <div class="control-group col-6">
+            @Html.Label(WebModels.WebResources.TimeApply, new { @class = "control-label" })
+            <div class="controls">
+                @Html.TextBoxFor(m => m.StringTimeApply, new { @class = "input-block-level datepicker", @id = "TimeApply" })
+                @Html.ValidationMessageFor(m => m.StringTimeApply)
+            </div>
+            <span class="form-obligatory">*</span>
+        </div>
+        <div class="control-group col-6">
+            @Html.Label(WebModels.WebResources.Shop, new { @class = "control-label" })
+            <div class="controls">
+                @if (checkEmployee)
+                {
+                    @Html.TextBoxFor(m => m.StationName, new { @class = "input-block-level none-edit", @readonly = "readonly" })
+                }
+                else
+                {
+                <div style="width:99%;">
+                    @(Html.Kendo().ComboBoxFor(m => m.StationID)
+                                                              .DataTextField("StationDisplayName")
+                                                              .DataValueField("ID")
+                                                              .Placeholder("Chọn cửa hàng...")
+                                                              .Suggest(true)
+                                                              .Filter("contains")
+                                                              .Name("StationID")
+                                                              .HtmlAttributes(new { id = "ComboboxStation" })
+                                                              .DataSource(source =>
+                                                              {
+                                                                  source.Read(read =>
+                                                              {
+                                                                  read.Action("GetStation", "Station");
+                                                              })
+                                                                  .ServerFiltering(true);
+                                                              })
+                                                              .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                         )
+                    @Html.ValidationMessageFor(m => m.StationID)
+                </div>
+                }
+            </div>
+            <span class="form-obligatory">*</span>
+        </div>
+    </div>
+    <div class="control-group col-12">
+        @Html.Label(WebModels.WebResources.Information, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextAreaFor(m => m.Information, new { @class = "input-block-level", @id = "Information", @cols = "60" })
+        </div>
+    </div>
+
+    <div class="title-importdetail">
+        <h2>Chi tiết cước vận chuyển</h2>
+    </div>
+    <div id="dealDetail">
+        @Html.Action("DealDetail", "FreightChages", new { ContentType = "admin" })
+    </div>
+    <div class="form-actions">
+        <button class="k-button" type="submit" id="save">@Resources.Common.SaveChanges</button>
+        <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
+    </div>
+    @Html.AntiForgeryToken()
+}
+<script type="text/javascript">
+    var datestring = '@(minDate)';
+    var stringarray = datestring.split(" ");
+    var timestring = stringarray[1];
+    var datestring = stringarray[0];
+    var datearray = datestring.split("/");
+    var timearray = timestring.split(":");
+    $(document).ready(function () {
+        top.winsetup("Cước Vận Chuyển", 1028, 650, true);
+        $('#freight').submit(function (e) {
+            e.preventDefault();
+        });
+        $("#save").click(function (e) {
+            var model = {};
+            function checkHasStation() {
+                if ('@checkEmployee' === 'True') {
+                    if (!$("#StationID").valid()) {
+                        return true;
+                    }
+                    else {
+                        model.StationID = $("#StationID").val();
+                        return false;
+                    }
+                }
+                else {
+                    if (!$("#ComboboxStation").valid()) {
+                        return true;
+                    }
+                    else {
+                        model.StationID = $("#ComboboxStation").data('kendoComboBox').value()
+                        return false;
+                    }
+                }
+            }
+            if (!$("#TimeApply").valid() || checkHasStation()) {
+                return;
+            }
+            model.ID = $("#ID").val();
+            model.StringTimeApply = $("#TimeApply").val();
+            model.Information = $("#Information").val();
+
+            // ... continue to set others
+            var dealdetailData = $("#dealEdit").data("kendoGrid").dataSource.data();
+
+            model.DealDetails = [];
+
+            for (var i = 0; i < dealdetailData.length; i++) {
+                var currentItem = dealdetailData[i];
+                var dealDetailObj = {};
+                dealDetailObj.ID = currentItem.ID;
+                dealDetailObj.Description = currentItem.Description;
+                dealDetailObj.DiscountAmount = currentItem.DiscountAmount;
+                dealDetailObj.FreightCharge = currentItem.FreightCharge;
+                if (dealDetailObj.FreightCharge !== undefined && dealDetailObj.DiscountAmount !== undefined && dealDetailObj.Description !== undefined) {
+                    model.DealDetails.push(dealDetailObj);
+                }
+            }
+
+            // let's submit
+
+            if (model.StationID === "") {
+                $("#stationValidation").css("opacity", "1");
+            }
+            if (model.StringTimeApply === "") {
+                $("#timeValidation").css("opacity", "1");
+            }
+            if (model.StationID !== "" && model.TimeApply !== "") {
+                if (dealdetailData.length > 0) {
+                    var checkDetail = true;
+                    for (var i = 0; i < dealdetailData.length; i++) {
+                        var currentItem = dealdetailData[i];
+                        var dealDetailObj = {};
+                        dealDetailObj.DiscountAmount = currentItem.DiscountAmount;
+                        if (currentItem.DiscountAmount === undefined) {
+                            checkDetail = false;
+                        }
+                        if (currentItem.FreightCharge === undefined) {
+                            checkDetail = false;
+                        }
+                    }
+                    if (checkDetail !== false) {
+                         $.ajax({
+                            url: "@Url.Action("Edit", "FreightChages")",
+                            contentType: "application/json",
+                            method: "post",
+                            data: JSON.stringify(model),
+                             success: function (data) {
+                                 if (data.message && data.message !== "") {
+                                     alert(data.message);
+                                     return;
+                                 }
+                                edit_success();
+                            },
+                            error: function (d) {
+                                console.log(d);
+                            }
+                        });
+                    } else {
+                        alert("Chi tiết cước vận chuyển không được để trống");
+                    }
+                } else {
+                    alert("Xin hãy nhập thông tin của chi tiết cước vận chuyển");
+                }
+            }
+        });
+    });
+
+    function edit_success() {
+        top.winclose();
+        top.$("#grid").data("kendoGrid").dataSource.read();
+        location.reload();
+    }
+
+    function thumbprocess(obj, target, noimg) {
+        var state = $(obj).attr("state");
+        var cthumb = $(obj).next().attr('url');
+        if (state == '' || state == null) {
+            $(obj).next().val('');
+            $('#' + target).find('img').attr('src', noimg);
+            $(obj).text("Khôi phục"); $(obj).attr("state", "1")
+        } else {
+            $(obj).text("Xóa");
+            $('#' + target).find('img').attr('src', cthumb);
+            $(obj).next().val(cthumb); $(obj).attr("state", "")
+        }
+    }
+
+    $(".datepicker").kendoDateTimePicker({
+        format: "dd/MM/yyyy HH:mm",
+        timeFormat: "HH:mm",
+        culture: "vi-VN",
+        min: new Date(parseInt(datearray[2]), parseInt(datearray[0]) - 1, parseInt(datearray[1]), parseInt(timearray[0]) + 1, 0)
+    });
+</script>

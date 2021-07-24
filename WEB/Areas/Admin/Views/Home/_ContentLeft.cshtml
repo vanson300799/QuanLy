@@ -1,0 +1,37 @@
+﻿@model IEnumerable<WebModels.WebModule>
+
+@foreach (var item in Model)
+{
+    if (item.MetaTitle == "bao-cao")
+    {
+<div class="overview flex box-task report" title="@item.Title">
+    <div href="#" class="text-14-400 padding-text-box-task menu-item row" id="report">
+        <span class="icon_left col-2">@Html.Raw(item.Image)</span>
+        <div class="col-10 text__url">@item.Title</div>
+    </div>
+    @Html.Action("_ReportMenuLeft", "Home", new { areas = "admin" })
+</div>
+    }
+    else
+    {
+        <div class="overview flex box-task " title="@item.Title">
+            <a href="@item.URL" class="text-14-400 padding-text-box-task menu-item row ">
+                <span class="icon_left col-2">@Html.Raw(item.Image)</span>
+                <div class="col-10 text__url">@item.Title</div>
+            </a>
+        </div>
+    }
+
+}
+<style>
+    .k-webkit {
+        overflow: auto !important;
+    }
+</style>
+<script>
+    $('.report').hover(function () {
+        $(".report-list").addClass("report-hide");
+    }, function () {
+
+    });
+</script>

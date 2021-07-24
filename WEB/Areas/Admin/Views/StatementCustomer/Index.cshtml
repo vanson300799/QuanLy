@@ -1,0 +1,401 @@
+﻿@model StatementCustomerViewModel
+@{
+    WebContext db = new WebContext();
+    var roles = Roles.GetRolesForUser();
+    var userRoleIds = db.WebRoles.Where(x => roles.Contains(x.RoleName)).Select(y => y.RoleId);
+    var roleWebModule = db.AccessWebModuleRoles.AsNoTracking().FirstOrDefault(x => userRoleIds.Contains(x.RoleId) && x.WebModule.URL == "/admin/StatementCustomer");
+    var checkEmployee = WEB.WebHelpers.UserInfoHelper.GetUserData().StationID.HasValue;
+    var totalWeigh = ViewBag.totalWeigh;
+    var totalCostPrice = ViewBag.totalCostPrice;
+}
+@{
+    ViewBag.Title = "Bảng kê tổng hợp khách hàng";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutReport_02.cshtml";
+}
+<div id="statement-customer">
+    <!--<div class="container-fluid">
+        <div class="page-header">-->
+    @*<div class="pull-left">
+            <div class="breadcrumbs">
+                <h1>@ViewBag.title</h1>
+            </div>
+        </div>*@
+    <!--<div class="pull-right">
+
+            </div>
+        </div>
+    </div>-->
+    @using (Html.BeginForm("ExportExcel", "StatementCustomer", FormMethod.Post, new { @id = "general", enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+    {
+        if (checkEmployee)
+        {
+            @Html.HiddenFor(x => x.StationID)
+        }
+        @Html.HiddenFor(m => m.StartTime)
+        @Html.HiddenFor(m => m.EndTime)
+
+        <div class="container-fluid">
+            <div class="messageValidation">
+                @Html.ValidationSummary()
+            </div>
+            <div class="row row-quanlyxe">
+                <div class="block-row">
+                    <div class="flex">
+                        <div class="manage-car-search row-plan-drive">
+                            <p class="text-description-report text-description-report-time">Thời gian chạy báo cáo:</p>
+                            <form action="">
+                                @Html.TextBoxFor(m => m.Time)
+                            </form>
+                        </div>
+                        <div class="customer-station">
+                            @if (checkEmployee)
+                            {
+                                @Html.HiddenFor(m => m.StationName, new { @class = "input-block-level none-edit", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                <p class="text-description-report">Cửa hàng:</p>
+                                @(Html.Kendo().ComboBoxFor(m => m.StationID)
+                                            .DataTextField("StationDisplayName")
+                                            .DataValueField("ID")
+                                            .Placeholder("Chọn cửa hàng ...")
+                                            .Suggest(true)
+                                            .Filter("contains")
+                                            .Name("StationID")
+                                            .HtmlAttributes(new { id = "ComboboxStation" })
+                                            .DataSource(source =>
+                                            {
+                                                source.Read(read =>
+                                                {
+                                                    read.Action("GetStation", "Station");
+                                                })
+                                                .ServerFiltering(true);
+                                            })
+                                            .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                            )
+                            }
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div>
+                            <p class="text-hide-custom">Xuất</p>
+                            <div class="btn-output btn-plan-drive detail-report-button" id="export">
+                                <p class="text-14-500 padding-text-plan-drive detail-export">Chạy Báo Cáo</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-hide-custom">Tải</p>
+                            <div class="btn-download btn-plan-drive detail-report-button" id="download">
+                                <input type="submit" value="Tải file excel" class="text-14-500 padding-text-plan-drive detail-download" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+<div class="container-fluid" id="dealDetail">
+    <div class="row-fluid">
+        <div class="span12">
+            <div class="box">
+                <div class="box-content nopadding">
+                    <div class="report-title">
+                        <h1>@ViewBag.title</h1>
+                        <h2 id="report-time"></h2>
+                        <h2 id="report-station"></h2>
+                    </div>
+                    <div id="detail-report" class="statement-customer"></div>
+                    <div id="emptyMessage" style="display: none;">Không có dữ liệu</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var grid;
+        $(document).ready(function () {
+            $("#export").click(function () {
+                var modelReport = {};
+                function checkHasStation() {
+                    if ('@checkEmployee' === 'True') {
+                        if (!$("#StationID").valid()) {
+                            return true;
+                        }
+                        else {
+                            modelReport.StationID = $("#StationID").val();
+                            return false;
+                        }
+                    }
+                    else {
+                        if (!$("#ComboboxStation").valid()) {
+                            return true;
+                        }
+                        else {
+                            modelReport.StationID = $("#ComboboxStation").data('kendoComboBox').value()
+                            return false;
+                        }
+                    }
+                }
+                var timeString = $("#Time").val();
+                var timeArray = timeString.split(" Đến ");
+                var startTime = timeArray[0];
+                var endTime = timeArray[1];
+                modelReport.StartTime = startTime;
+                modelReport.EndTime = endTime;
+                console.log(modelReport.stationID);
+                if (!checkHasStation()) {
+                    $.ajax({
+                        url: '@Url.Action("StatementCustomerRead", "StatementCustomer")',
+                        type: 'POST',
+                        contentType: "application/json",
+                        data: JSON.stringify(modelReport),
+                        success: function (result) {
+                            if (!result || result.length == 0) {
+                                return;
+                            }
+
+                            if (result.message && result.message !== "") {
+                                $("#emptyMessage").show();
+                                //location.reload();
+                                grid.data("kendoGrid").dataSource.data([]);
+                                grid.empty();
+                                return;
+                            }
+
+                            $("#emptyMessage").hide();
+
+                            // refesh data for kendo grid
+                            var kendoData = generateData(result);
+
+                            // generate gird
+                            generateGrid(kendoData);
+                            // set columns for kendo grid
+                        }
+                    });
+                } else {
+                    alert("Xin hãy chọn cửa hàng trước khi xem báo cáo");
+                }
+
+
+                $("#report-time").html(timeString);
+                if ('@checkEmployee' === 'True') {
+                $("#report-station").html("Cửa hàng: " + $("input[name='StationName']").val());
+                } else {
+                    $("#report-station").html("Cửa hàng: " + $("#ComboboxStation").data('kendoComboBox').text());
+                };
+            });
+            $("#download").click(function () {
+                var timeString = $("#Time").val();
+                var timeArray = timeString.split(" Đến ");
+                var startTime = timeArray[0];
+                var endTime = timeArray[1];
+                $("input[name='StartTime']").val(startTime);
+                $("input[name='EndTime']").val(endTime);
+            });
+        });
+    // function genertae grid
+    function generateGrid(dataModel) {
+        // set model file kendo
+        var kendoModel = generateModel(dataModel);
+
+        // set column generate
+        var kendoColumn = generateColumn(dataModel);
+
+        // set aggeregate
+        var aggeregate = generateAggeregate(dataModel);
+
+        var dataSource = new kendo.data.DataSource({
+            data: dataModel
+        });
+        dataSource.schema = {
+            model: kendoModel
+        };
+
+        dataSource.aggregate(aggeregate);
+
+        if (grid) {
+            $("#detail-report").empty();
+            var options = {};
+            $("#detail-report").kendoGrid(options).data("kendoGrid");
+            options = $("#detail-report").data("kendoGrid").options;
+            options.dataSource = dataSource;
+            options.columns = kendoColumn;
+            $("#detail-report").kendoGrid(options).data("kendoGrid");
+        } else {
+            grid = $("#detail-report").kendoGrid({
+                dataSource: dataSource,
+                columns: kendoColumn,
+                filterable: true,
+            });
+        }
+    }
+    // function set aggeregate file  grid
+    function generateAggeregate(data) {
+        var kendoSum = [];
+        var objColumn = data[0];
+        var arrayModel = Object.keys(objColumn);
+        for (var i = 0; i < arrayModel.length; i++) {
+            var currentProperty = arrayModel[i];
+            if (currentProperty.indexOf("ProductName") !== -1) {
+                var productArray = currentProperty.split("_");
+                var id = productArray[1];
+
+                for (var j = 0; j < arrayModel.length; j++) {
+                    var currentPropertyChild = arrayModel[j];
+                    if (currentPropertyChild == "ProductMoney_" + id) {
+                        var columnchild = { field: currentPropertyChild, aggregate: "sum" };
+                        kendoSum.push(columnchild);
+                    }
+                    if (currentPropertyChild == "ProductSaleAmount_" + id) {
+                        var columnchild = { field: currentPropertyChild, aggregate: "sum" };
+                        kendoSum.push(columnchild);
+                    }
+                }
+            }
+        }
+        var sum = { field: "Sum", aggregate: "sum" };
+        kendoSum.push(sum);
+        return kendoSum;
+
+    }
+    // function set model file  grid
+    function generateModel(data) {
+        var objModel = data[0];
+        var arrayModel = Object.keys(objModel);
+        var model = {};
+        var fields = {};
+        for (var i = 0; i < arrayModel.length; i++) {
+            var currentProperty = arrayModel[i];
+            if (currentProperty.indexOf("ProductMoney") !== -1 || currentProperty.indexOf("ProductSaleAmount") !== -1) {
+                fields[currentProperty] = {
+                    type: "decimal",
+                };
+            }
+
+            if ( currentProperty.indexOf("CustomerName") !== -1) {
+                fields[currentProperty] = {
+                    type: "string",
+                };
+            }
+        }
+        fields["Sum"] = { type: "decimal" };
+        model.fields = fields;
+        return model;
+    }
+    // function set column gird
+    function generateColumn(data) {
+        var objColumn = data[0];
+        var arrayModel = Object.keys(objColumn);
+        var columns = [];
+        for (var i = 0; i < arrayModel.length; i++) {
+            var objColumnTitile = data[0];
+            var currentProperty = arrayModel[i];
+
+            if (currentProperty.indexOf("CustomerName") !== -1) {
+                var column = { field: currentProperty, title: "Tên cơ quan", footerTemplate: "Tổng" };
+                columns.push(column);
+            }
+
+            if (currentProperty.indexOf("Count") !== -1) {
+                var column = { field: currentProperty, title: "Thứ tự" };
+                columns.push(column);
+            }
+
+            if (currentProperty.indexOf("ProductName") !== -1) {
+                var columnChild = [];
+                var productArray = currentProperty.split("_");
+                var id = productArray[1];
+
+                for (var j = 0; j < arrayModel.length; j++) {
+                    var currentPropertyChild = arrayModel[j];
+
+                    if (currentPropertyChild == "ProductMoney_" + id) {
+                        var templates = "#= (data." + currentPropertyChild + " !== undefined && data." + currentPropertyChild + " != 0) ? kendo.format(" + "\'" + "{0:n0} đ" + "\'" + ", parseFloat(data." + currentPropertyChild + ")) : " + "\'" + "\'" + " #";
+                        var columnchild = { field: currentPropertyChild, title: "Thành tiền", template: templates, aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #" };
+                        columnChild.push(columnchild);
+                    }
+
+                    if (currentPropertyChild == "ProductSaleAmount_" + id) {
+                        var templates = "#= (data." + currentPropertyChild + " !== undefined && data." + currentPropertyChild + " != 0) ? kendo.format(" + "\'" + "{0:n2} lít" + "\'" + ", parseFloat(data." + currentPropertyChild + ")) : " + "\'" + "\'" + " #";
+                        var columnchild = { field: currentPropertyChild, title: "Số lượng", template: templates, aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n2} lít', parseFloat(sum)) : '' #"};
+                        columnChild.push(columnchild);
+                    }
+                }
+
+                var column = {
+                    title: objColumnTitile[currentProperty],
+                    columns: columnChild
+                };
+                columns.push(column);
+            }
+        }
+        var sum = { field: "Sum", title: "Tổng", template: "#= (data.Sum) ? kendo.format('{0:n0} đ', parseFloat(data.Sum)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #" };
+        columns.push(sum);
+        return columns;
+    }
+    // fucntion refesh data kendo
+    function generateData(data) {
+        var kendoData = [];
+        for (var i = 0; i < data.length; i++) {
+            currentData = data[i];
+            var kendoDataItem = {};
+            kendoDataItem.Count = i + 1;
+            kendoDataItem.Sum = 0;
+            kendoDataItem.CustomerName = currentData.CustomerName;
+            for (var j = 0; j < currentData.listProductReportCustomers.length; j++) {
+                var productInfo = currentData.listProductReportCustomers[j];
+                kendoDataItem.Sum += productInfo.ProductMoney;
+                var productNameField = "ProductName_" + productInfo.ProductID;
+                kendoDataItem[productNameField] = productInfo.ProductName;
+
+                var productSaleAmountField = "ProductSaleAmount_" + productInfo.ProductID;
+                kendoDataItem[productSaleAmountField] = productInfo.ProductSaleAmount;
+
+                var productMoneyField = "ProductMoney_" + productInfo.ProductID;
+                kendoDataItem[productMoneyField] = productInfo.ProductMoney;
+            }
+
+            kendoData.push(kendoDataItem);
+        }
+        return kendoData;
+    }
+    // function data null
+    function kendgridnull() {
+        var dataNull = [{}];
+        if ($("#detail-report").data("kendoGrid") != null) { $('#detail-report').html(''); delete $("#detail-report").data("kendoGrid"); }
+        $("#detail-report").kendoGrid({
+            dataSource: {
+                dataSource: dataNull,
+                emptyMsg: 'This grid is empty',
+                schema: {
+                    model: {
+                        ID: "ID",
+                        fields: {
+                            Count: { type: "number" },
+                            CustomerName: { type: "string" },
+                        }
+                    }
+                },
+            },
+            scrollable: true,
+            filterable: true,
+            columns: [
+                {  title: "Thứ tự" },
+                {  title: "Tên cơ quan" },
+            ],
+            dataBinding: function () {
+                rowselected = new Array();
+            },
+            change: function () {
+                rowselected = [];
+                var len = this.select().length;
+                for (i = 0; i < len; i++) {
+                    rowselected.push(this.dataItem(this.select()[i]).ID);
+                }
+            }
+        });
+    }
+</script>

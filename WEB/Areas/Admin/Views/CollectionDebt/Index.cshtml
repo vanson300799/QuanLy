@@ -1,0 +1,263 @@
+﻿@model CollectionDebtViewModel
+@{
+    WebContext db = new WebContext();
+    var roles = Roles.GetRolesForUser();
+    var userRoleIds = db.WebRoles.Where(x => roles.Contains(x.RoleName)).Select(y => y.RoleId);
+    var roleWebModule = db.AccessWebModuleRoles.AsNoTracking().FirstOrDefault(x => userRoleIds.Contains(x.RoleId) && x.WebModule.URL == "/admin/CollectionDebt");
+    var checkEmployee = WEB.WebHelpers.UserInfoHelper.GetUserData().StationID.HasValue;
+}
+@{
+    ViewBag.Title = "Tổng hợp công nợ phải thu";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutReport_02.cshtml";
+}
+<div id="customer">
+    <div class="flex">
+        <div id="general-import">
+            @using (Html.BeginForm("ExportExcel", "CollectionDebt", FormMethod.Post, new { @id = "general", enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+            {
+                if (checkEmployee)
+                {
+                    @Html.HiddenFor(x => x.StationID)
+                }
+                @Html.HiddenFor(m => m.StartTime)
+                @Html.HiddenFor(m => m.EndTime)
+                <div class="row row-quanlyxe">
+                    <div class="block-row">
+                        <div class="flex">
+                            <div class="manage-car-search row-plan-drive">
+                                <p class="text-description-report text-description-report-time">Thời gian chạy báo cáo:</p>
+                                <form action="">
+                                    @Html.TextBoxFor(m => m.Time)
+                                </form>
+                            </div>
+                            <div class="customer-station">
+                                <p class="text-description-report text-description-report-time">Khách hàng: </p>
+                                @(Html.Kendo().ComboBoxFor(m => m.CustomerID)
+                                               .DataTextField("CustomerDisplayName")
+                                               .DataValueField("ID")
+                                               .Placeholder("Chọn khách hàng...")
+                                               .Suggest(true)
+                                               .Filter("contains")
+                                               .Name("CustomerID")
+                                               .HtmlAttributes(new { id = "ComboboxCustomer" })
+                                               .DataSource(source =>
+                                               {
+                                                   source.Read(read =>
+                                                   {
+                                                       read.Action("GetCustomer", "Customer");
+                                                   })
+                                                   .ServerFiltering(true);
+                                               })
+                                            .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                             )
+                            </div>
+                                <div class="customer-station">
+                                    @if (checkEmployee)
+                                    {
+                                        @Html.HiddenFor(m => m.StationName, new { @class = "input-block-level none-edit", @readonly = "readonly" })
+                                    }
+                                    else
+                                    {
+                                        <p class="text-description-report">Cửa hàng:</p>
+                                        @(Html.Kendo().ComboBoxFor(m => m.StationID)
+                            .DataTextField("StationDisplayName")
+                            .DataValueField("ID")
+                            .Placeholder("Chọn cửa hàng ...")
+                            .Suggest(true)
+                            .Filter("contains")
+                            .Name("StationID")
+                            .HtmlAttributes(new { id = "ComboboxStation" })
+                            .DataSource(source =>
+                            {
+                                source.Read(read =>
+                                {
+                                    read.Action("GetStation", "Station");
+                                })
+                                .ServerFiltering(true);
+                            })
+                            .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                         )
+                                    }
+                                </div>
+                            </div>
+                            <div class="flex">
+                                <div>
+                                    <p class="text-hide-custom">Xuất</p>
+                                    <div class="btn-output btn-plan-drive detail-report-button" id="export">
+                                        <p class="text-14-500 padding-text-plan-drive detail-export">Chạy Báo Cáo</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-hide-custom">Tải</p>
+                                    <div class="btn-download btn-plan-drive detail-report-button" id="download">
+                                        <input type="submit" value="Tải file excel" class="text-14-500 padding-text-plan-drive detail-download" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                </div>
+            }
+
+            <div class="container-fluid" id="dealDetail">
+                <div class="row-fluid">
+                    <div class="span12">
+                        <div class="box">
+                            <div class="box-content nopadding">
+                                <div class="report-title">
+                                    <h1>@ViewBag.title</h1>
+                                    <h2 id="report-time"></h2>
+                                    <h2 id="report-station"></h2>
+                                    <h2 id="report-customer"></h2>
+                                </div>
+                                <div id="detail-report" class="statement-customer"></div>
+                                <script>
+                                    var rowselected;
+                                    var columns = [
+                                        { field: "CustomerCode", title: "Mã khách hàng" },
+                                        { field: "CustomerName", title: "Tên khách hàng", footerTemplate: "Tổng" },                                        
+                                        {
+                                            title: "Số dư đầu kỳ",
+                                            columns: [
+                                                { field: "DebtPriceBegin", title: "Nợ", template: "#=(data.DebtPriceBegin ) ? kendo.format('{0:n0} đ', parseFloat(data.DebtPriceBegin)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum ) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #" },
+                                                { field: "HavePriceBegin", title: "Có", template: "#=(data.HavePriceBegin) ? kendo.format('{0:n0} đ', parseFloat(data.HavePriceBegin)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum ) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #" },
+                                            ]
+                                        },
+                                        {
+                                            title: "Số phát sinh",
+                                            columns: [
+                                                { field: "DebtPriceGrow", title: "Nợ", template: "#=(data.DebtPriceGrow ) ? kendo.format('{0:n0} đ', parseFloat(data.DebtPriceGrow)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum ) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #" },
+                                                { field: "HavePriceGrow", title: "Có", template: "#=(data.HavePriceGrow ) ? kendo.format('{0:n0} đ', parseFloat(data.HavePriceGrow)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum ) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #" },
+                                            ]
+                                        },
+                                        {
+                                            title: "Số dư cuối kỳ",
+                                            columns: [
+                                                { field: "DebtPriceTerm", title: "Nợ", template: "#=(data.DebtPriceTerm ) ? kendo.format('{0:n0} đ', parseFloat(data.DebtPriceTerm)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum ) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #" },
+                                                { field: "HavePriceTerm", title: "Có", template: "#=(data.HavePriceTerm) ? kendo.format('{0:n0} đ', parseFloat(data.HavePriceTerm)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum ) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #" },
+                                            ]
+                                        },
+                                        { field: "StationName", title: "Tên cửa hàng" },
+                                    ]
+                                    function loaddata(model) {
+                                        if ($("#detail-report").data("kendoGrid") != null) { $('#detail-report').html(''); delete $("#detail-report").data("kendoGrid"); }
+                                        $("#detail-report").kendoGrid({
+                                            dataSource: {
+                                                transport: {
+                                                    read: {
+                                                        url: "/admin/CollectionDebt/CollectionDebt_Read/",
+                                                        dataType: "json",
+                                                        data: model
+                                                    }
+                                                },
+                                                aggregate: [
+                                                    { field: "DebtPriceBegin", aggregate: "sum" },
+                                                    { field: "HavePriceBegin", aggregate: "sum" },
+                                                    { field: "DebtPriceGrow", aggregate: "sum" },
+                                                    { field: "HavePriceGrow", aggregate: "sum" },
+                                                    { field: "DebtPriceTerm", aggregate: "sum" },
+                                                    { field: "HavePriceTerm", aggregate: "sum" },
+                                                ],
+                                                emptyMsg: 'This grid is empty',
+                                                schema: {
+                                                    model: {
+                                                        ID: "ID",
+                                                        fields: {
+                                                            CustomerCode: { type: "string" },
+                                                            CustomerName: { type: "string" },
+                                                            StationName: { type: "string" },
+                                                            DebtPriceBegin: { type: "number" },
+                                                            HavePriceBegin: { type: "number" },
+                                                            DebtPriceGrow: { type: "number" },
+                                                            HavePriceGrow: { type: "number" },
+                                                            DebtPriceTerm: { type: "number" },
+                                                            HavePriceTerm: { type: "number" },
+                                                        }
+                                                    },
+                                                }
+                                            },
+                                            scrollable: true,
+                                            columns: columns,
+                                            filterable: true,
+                                            dataBinding: function () {
+                                                rowselected = new Array();
+                                            },
+                                            change: function () {
+                                                rowselected = [];
+                                                var len = this.select().length;
+                                                for (i = 0; i < len; i++) {
+                                                    rowselected.push(this.dataItem(this.select()[i]).ID);
+                                                }
+                                            }
+                                        });
+                                    }
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#export").click(function () {
+            var modelReport = {};
+                function checkHasStation() {
+                    if ('@checkEmployee' === 'True') {
+                        if (!$("#StationID").valid()) {
+                            return true;
+                        }
+                        else {
+                            modelReport.StationID = $("#StationID").val();
+                            return false;
+                        }
+                    }
+                    else {
+                        if (!$("#ComboboxStation").valid()) {
+                            return true;
+                        }
+                        else {
+                            modelReport.StationID = $("#ComboboxStation").data('kendoComboBox').value()
+                            return false;
+                        }
+                    }
+                }
+                checkHasStation();
+            var timeString = $("#Time").val();
+            var timeArray = timeString.split(" Đến ");
+            var startTime = timeArray[0];
+            var endTime = timeArray[1];
+            modelReport.startTime = startTime;
+            modelReport.endTime = endTime;
+            modelReport.CustomerID = $("#ComboboxCustomer").val();
+            loaddata(modelReport);
+            $("#report-time").html(timeString);
+            if ('@checkEmployee' === 'True') {
+                $("#report-station").html("Cửa hàng: " + $("input[name='StationName']").val());
+            } else {
+                if (modelReport.StationID == null || modelReport.StationID == "") {
+                    $("#report-station").html("Cửa hàng: Tất cả")
+                } else {
+                    $("#report-station").html("Cửa hàng: " + $("#ComboboxStation").data('kendoComboBox').text());
+                };
+            };
+            if (modelReport.CustomerID == null || modelReport.CustomerID == "") {
+                $("#report-customer").html("Khách hàng: Tất cả")
+            } else {
+                $("#report-customer").html("Khách hàng: " + $("#ComboboxCustomer").data('kendoComboBox').text());
+            };
+        });
+        $("#download").click(function () {
+            var timeString = $("#Time").val();
+            var timeArray = timeString.split(" Đến ");
+            var startTime = timeArray[0];
+            var endTime = timeArray[1];
+            $("input[name='StartTime']").val(startTime);
+            $("input[name='EndTime']").val(endTime);
+        });
+    });
+</script>

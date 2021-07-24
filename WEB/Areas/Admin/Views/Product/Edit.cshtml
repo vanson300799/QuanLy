@@ -1,0 +1,87 @@
+﻿@model ProductViewModel
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
+}
+
+@using (Html.BeginForm("Edit", "Product", new { cCommodityCode = ViewBag.cCommodityCode },
+    FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+{
+    @Html.HiddenFor(m=>m.ProductCode)
+    <div class="validation-group">
+        <div class="controls">
+            <p class="supplier-validate">@Html.ValidationSummary(true)</p>
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.Label("Mã máy", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.ProductCode, new { @class = "input-block-level" })
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.Label("Tên máy móc", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.ProductName, new { @class = "input-block-level" })
+            @Html.ValidationMessageFor(m => m.ProductName)
+        </div>
+        <span class="form-obligatory">*</span>
+    </div>
+    <div class="control-group">
+        @Html.Label("Vị trí", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.Position, new { @class = "input-block-level" })
+        </div>
+        <span class="form-obligatory">*</span>
+    </div>
+    <div class="control-group">
+        @Html.Label("Thông tin máy", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextAreaFor(m => m.Information, new { @class = "input-block-level" })
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button class="k-button" type="submit" id="subform"><i class="icon-save"></i>@Resources.Common.SaveChanges</button>
+        <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
+    </div>
+    @Html.AntiForgeryToken()
+}
+<script type="text/javascript">
+    $(document).ready(function () {
+        top.winsetup("Sửa máy móc", 600, 320, true);
+    });
+    //$("#subform").click(function () {
+    //    var string = $("input[name='Tax']").val();
+    //    var tax = string.replace(",", ".");
+    //    $("input[name='Tax']").val(tax)
+    //});
+
+    function edit_success() {
+        top.$("#window").data("kendoWindow").close();
+        top.$("#grid").data("kendoGrid").dataSource.read();
+    }
+
+    function thumbprocess(obj, target, noimg) {
+        var state = $(obj).attr("state");
+        var cthumb = $(obj).next().attr('url');
+        if (state == '' || state == null) {
+            $(obj).next().val('');
+            $('#' + target).find('img').attr('src', noimg);
+            $(obj).text("Khôi phục"); $(obj).attr("state", "1")
+        } else {
+            $(obj).text("Xóa");
+            $('#' + target).find('img').attr('src', cthumb);
+            $(obj).next().val(cthumb); $(obj).attr("state", "")
+        }
+    }
+    setTimeout(function () {
+        var height = $('form').height();
+        window.parent.$(".k-window").height(height + 30);
+        $(".k-button").click(function () {
+            setTimeout(function () {
+                var height = $('form').height();
+                window.parent.$(".k-window").height(height + 30);
+            }, 100);
+        });
+    }, 1000);
+</script>

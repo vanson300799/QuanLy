@@ -1,0 +1,258 @@
+﻿@model ExcelImportViewModel
+@{
+    WebContext db = new WebContext();
+    var roles = Roles.GetRolesForUser();
+    var userRoleIds = db.WebRoles.Where(x => roles.Contains(x.RoleName)).Select(y => y.RoleId).ToList();
+    var roleWebModule = db.AccessWebModuleRoles.AsNoTracking().FirstOrDefault(x => userRoleIds.Contains(x.RoleId) && x.WebModule.URL == "/admin/GeneralImport");
+    var totalWeigh = ViewBag.totalWeigh;
+    var totalCostPrice = ViewBag.totalCostPrice;
+}
+@{
+    ViewBag.Title = "Bảng theo dõi nhập hàng tổng hợp";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutReport.cshtml";
+}
+<script>
+    //datacombobox PRODUCT
+    var comboboxProduct = {};
+    var checkFirstBound = 0;
+    function onDataBound() {
+        if (checkFirstBound == 0)
+        {
+            comboboxProduct = $("#GeneralImportProduct").data("kendoComboBox").dataSource.data();
+            checkFirstBound = 1;
+        }        
+    }
+</script>
+
+<div id="general-import">
+    @*<div class="container-fluid">
+            <div class="page-header">
+                <div class="pull-left">
+                    <div class="breadcrumbs">
+                        <h1>@ViewBag.title</h1>
+                    </div>
+                </div>
+                <div class="pull-right">
+
+                </div>
+            </div>
+        </div>*@
+    @using (Html.BeginForm("ExportExcel", "GeneralImport", FormMethod.Post, new { @id = "general", enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+    {
+        @Html.HiddenFor(m => m.DataExport)
+        <div class="messageValidation">
+            @Html.ValidationSummary()
+        </div>
+        <div class="row row-quanlyxe">
+            <div class="block-row">
+                <div class="flex">
+                    <div class="manage-car-search row-plan-drive">
+                        <p class="text-description-report text-description-report-time">Thời gian chạy báo cáo:</p>
+                        <form action="">
+                            @Html.TextBoxFor(m => m.Time)
+                        </form>
+                    </div>
+                    <div id="comboboxProductID">
+                        <p class="text-description-report">Hàng hoá:</p>
+                        @(Html.Kendo().ComboBoxFor(m => m.ProductID)
+                            .DataTextField("ProductDisplayName")
+                            .DataValueField("ID")
+                            .Placeholder("Chọn hàng hóa...")
+                            .Suggest(true)
+                            .Filter("contains")
+                            .Name("ProductID")
+                            .HtmlAttributes(new { id = "ComboboxProduct" })
+                            .Events(ev => ev.DataBound("onDataBound"))
+                            .DataSource(source =>
+                            {
+                                source.Read(read =>
+                            {
+                                read.Action("GetProduct", "Product");
+                            })
+                                .ServerFiltering(true);
+                            })
+                            .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+            )
+                    </div>
+                </div>
+                <div class="flex">
+                    <div>
+                        <p class="text-hide-custom">Xuất</p>
+                        <span class="btn-output btn-plan-drive radius-button" id="export">
+                            <p class="text-14-500 padding-text-plan-drive report-export">Chạy báo cáo</p>
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-hide-custom">Tải</p>
+                        <span class="btn-download btn-plan-drive radius-button" id="download">
+                            <input type="submit" value="Tải file excel" class="text-14-500 padding-text-plan-drive report-download" />
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="container-fluid" id="dealDetail">
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="box">
+                    <div class="box-content nopadding">
+                        <div class="report-title">
+                            <h1>@ViewBag.title</h1>
+                            <h2 id="report-time"></h2>
+                            <h2 id="report-product"></h2>
+                        </div>
+                        <div id="detail-report"></div>
+                        <script>
+                            var rowselected;
+                            var columns = [
+                                { field: "Count", title: "Thứ tự", width: "100px" },
+                                { field: "StationName", title: "Cửa Hàng", footerTemplate: "Tổng", width: "150px" },
+                                { field: "Weigh", title: "Khối lượng", template: "#= (data.Weigh) ? kendo.format('{0:n2} lít', parseFloat(data.Weigh)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n2} Lít', parseFloat(sum)) : '' #", width: "150px" },
+                                { field: "CostPrice", title: "Giá vốn có V", template: "#= (data.CostPrice) ? kendo.format('{0:n0} đ', parseFloat(data.CostPrice)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #", width: "150px" }];
+                            function loaddata(model) {
+                                if ($("#detail-report").data("kendoGrid") != null) {
+                                    $('#detail-report').html('');
+                                    delete $("#detail-report").data("kendoGrid")
+                                    $("#detail-report").data('kendoGrid').dataSource.data([]);;
+                                }
+                                $("#detail-report").kendoGrid({
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: "/admin/GeneralImport/GeneralImportRead/",
+                                                dataType: "json",
+                                                data: model,
+                                            }
+                                        },
+                                        aggregate: [
+                                            { field: "Weigh", aggregate: "sum" },
+                                            { field: "CostPrice", aggregate: "sum" },
+                                        ],
+                                        emptyMsg: 'This grid is empty',
+                                        schema: {
+                                            model: {
+                                                ID: "ID",
+                                                fields: {
+                                                    Count: { type: "number" },
+                                                    StationName: { type: "string" },
+                                                    Weigh: { type: "number" },
+                                                    CostPrice: { type: "number" }
+                                                }
+                                            }
+                                        },
+                                    },
+                                    scrollable: true,
+                                    columns: columns,
+                                    filterable: true,
+                                    dataBinding: function () {
+                                        rowselected = new Array();
+                                    },
+                                    change: function (e) {
+                                        rowselected = [];
+                                        var len = this.select().length;
+                                        for (i = 0; i < len; i++) {
+                                            rowselected.push(this.dataItem(this.select()[i]).ID);
+                                        }
+                                    }
+                                });
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div class="d-flex justify-content-center">
+    <div class="loader" style="display:none; margin-top: 30px;"></div>
+</div>
+<script>
+    $(document).ready(function () {
+        //datacombobox PRODUCT
+
+        $("#export").click(function () {
+            //$(".loader").show();
+            if ($("#detail-report").data("kendoGrid") != null) {
+                $('#detail-report').html('');
+                delete $("#detail-report").data("kendoGrid")
+                $("#detail-report").data('kendoGrid').dataSource.data([]);;
+            }
+
+            var modelReport = {};
+            var timeString = $("#Time").val();
+            var timeArray = timeString.split(" Đến ");
+            var startTime = timeArray[0];
+            var endTime = timeArray[1];
+            modelReport.StartTime = startTime;
+            modelReport.EndTime = endTime;
+            modelReport.Time = timeString;
+            modelReport.ProductID = $("#ComboboxProduct").val();
+
+            var inputCombobox = $("input[name='Product_input']").val();
+            
+            if (inputCombobox == "" || inputCombobox == undefined) {
+                modelReport.ProductID == null;
+                $("#report-product").html("Hàng Hoá: Tất cả");
+            }
+            else {
+                for (var i = 0; i <= comboboxProduct.length; i++) {
+                    if (i == comboboxProduct.length) {
+                        $("#report-product").html("Hàng Hoá: <b style='color:red'>Không tồn tại</b>");
+                        return;
+                    }
+                    else if (inputCombobox == comboboxProduct[i].ProductDisplayName) {
+                        modelReport.ProductID = comboboxProduct[i].ID;
+                        $("#report-product").html("Hàng Hoá: " + comboboxProduct[i].ProductDisplayName);
+                        break;
+                    }
+                }
+            }
+
+            loaddata(modelReport);
+            $("#report-time").html(timeString);
+
+        });
+
+        $("#download").click(function (e) {
+            e.preventDefault();
+
+            if ($("#detail-report").data("kendoGrid") != null) {
+
+                //Kiểm tra dữ liệu rồi tải xuống
+                var dataSource = $("#detail-report").data("kendoGrid").dataSource;
+                var filters = dataSource.filter();
+                var allData = dataSource.data();
+                var query = new kendo.data.Query(allData);
+                var grid = query.filter(filters).data;
+
+                var models = [];
+                for (var i = 0; i < grid.length; i++) {
+                    var dataItem = grid[i];
+                    var model = {};
+                    model.Time = $("#Time").val();
+                    model.ProductName = $("#report-product").html();
+                    model.Count = dataItem.Count;
+                    model.StationName = dataItem.StationName;
+                    model.Weigh = dataItem.Weigh;
+                    model.CostPrice = dataItem.CostPrice;
+
+                    models.push(model);
+                }
+                var dataString = JSON.stringify(models);
+                var dataExport = dataString.replace('"', "?");
+                $("input[name='DataExport']").val(dataExport);
+
+                console.log(dataExport);
+                setTimeout(function () {
+                    $("#general").submit();
+                }, 100);
+            }
+            else {
+                alert("Vui lòng chạy báo cáo trước khi tải!!");
+            }
+        });
+    });
+</script>

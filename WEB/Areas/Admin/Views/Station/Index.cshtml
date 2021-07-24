@@ -1,0 +1,166 @@
+﻿@{
+    WebContext db = new WebContext();
+    var roles = Roles.GetRolesForUser();
+    var userRoleIds = db.WebRoles.Where(x => roles.Contains(x.RoleName)).Select(y => y.RoleId).ToList();
+    var roleWebModule = db.AccessWebModuleRoles.AsNoTracking().FirstOrDefault(x => userRoleIds.Contains(x.RoleId) && x.WebModule.URL == "/admin/Station");
+
+}
+@{
+    ViewBag.Title = "Danh Mục Cửa Hàng";
+}
+
+<script type="text/javascript">
+    function error_handler(e) {
+        if (e.errors) {
+            var message = "Errors:\n";
+            $.each(e.errors, function (key, value) {
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += this + "\n";
+                    });
+                }
+            });
+            alert(message);
+        }
+    }
+    var rowselected = [];
+    function change_handler(e) {
+        rowselected = [];
+        var len = this.select().length;
+        for (i = 0; i < len; i++) {
+            rowselected.push(this.dataItem(this.select()[i]).ID);
+        }
+    }
+    function binding_handler(e) {
+        rowselected = [];
+    }
+    function delete_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Station/delete/" + dataItem.ID);
+    }
+
+    function edit_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Station/edit/" + dataItem.ID);
+    }
+
+    function modules_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Station/ModulesMapping/" + dataItem.UserId);
+
+    }
+    function sites_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Station/AdminSitesMapping/" + dataItem.UserId);
+    }
+
+    $(document).ready(function () {
+        $("#btnadd").click(function () {
+            opendlg("/admin/Station/add");
+        });
+        $("#btnedit").click(function () {
+            if (rowselected.length > 0) {
+                opendlg("/admin/Station/edit/" + rowselected[0]);
+            } else {
+                alert("Không có khoản mục nào được chọn.");
+            }
+        });
+        $("#btndelete").click(function () {
+            if (rowselected.length > 0) {
+                opendlg("/admin/Station/deletes/" + rowselected);
+            } else {
+                alert("Không có khoản mục nào được chọn.");
+            }
+        });
+    });
+
+    jQuery.validator.methods.date = function (value, element) {
+        var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+        if (isChrome) {
+            var d = new Date();
+            return this.optional(element) || !/Invalid|NaN/.test(parseDate(value));
+        } else {
+            return this.optional(element) || !/Invalid|NaN/.test(parseDate(value));
+        }
+    };
+</script>
+<div id="main">
+    <div id="left"></div>
+    @if (roleWebModule != null && roleWebModule.View.HasValue && !roleWebModule.View.Value)
+    {
+        @Html.Action("Denied", "Account", new { area = "admin" })
+    }
+    @if (roleWebModule != null && roleWebModule.View.HasValue && roleWebModule.View.Value)
+    {
+        <div class="container-fluid">
+            <div class="page-header">
+                <div class="pull-left">
+                    <div class="breadcrumbs">
+                        <h1>Quản lý di chuyển</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="row-fluid">
+                <div class="span12">
+                    <div class="box">
+                        <div class="box-content nopadding">
+                            @(Html.Kendo().Grid<StationViewModel>()
+                .Name("grid")
+                .Selectable()
+                .Columns(columns =>
+                {
+                    columns.Bound(p => p.CreatedAt).Hidden(true);
+                    columns.Bound(p => p.StationCode).Title("Mã máy móc").Width(150).HtmlAttributes(new { style = "text-align:center;" });
+                    columns.Bound(p => p.StationName).Title("Tên máy móc");
+                    columns.Bound(p => p.UserChange).Title("Người di chuyển");
+                    columns.Bound(p => p.PositionOld).Title("Vị trí cũ");
+                    columns.Bound(p => p.PositionNew).Title("Vị trí mới");
+                    columns.Bound(p => p.ModifiedAt).Title("Thời gian di chuyển")
+                    .Filterable(filterable =>filterable.UI(@<text>function (element) {
+                                                element.kendoDateTimePicker({
+                                                    culture: 'vi-VN'
+                                                });
+                                            }</text>))
+                    .Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:center;" });
+                    columns.Command(command =>
+                    {
+                        if (roleWebModule != null && roleWebModule.Delete.HasValue && roleWebModule.Delete.Value)
+                        {
+                            command.Destroy();
+                        }
+                    }).HtmlAttributes(new { style = "text-align:center;" }).Title("Hành động").Width(155);
+                })
+                .Pageable()
+                .Selectable(select => select.Mode(GridSelectionMode.Multiple))
+                .Sortable()
+                .Filterable()
+                .Editable( ed => ed.DisplayDeleteConfirmation("Bạn có chắc chắn xoá mục này?"))
+                .DataSource(dataSource => dataSource
+                    .Ajax()
+                    .Batch(true)
+                    .Events(events => events.Error("error_handler"))
+                    .Model(model => { model.Id(p => p.ID); })
+                    .PageSize(10)
+                    .Read(read => read.Action("Station_Read", "Station"))
+                    .Destroy(destroy => destroy.Action("EditingStation_Destroy", "Station"))
+                    )
+                     .Events(events => events.Change("change_handler").DataBinding("binding_handler"))
+                        )
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+
+<style>
+    .k-webkit {
+        overflow: auto !important;
+    }
+</style>

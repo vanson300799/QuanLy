@@ -1,0 +1,72 @@
+﻿@model NoteBookKeyViewModel
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
+}
+
+@using (Html.BeginForm("Edit", "NoteBookKey", new { cUserName = ViewBag.cUserName, UserId = Model.ID },
+    FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+{
+    @Html.HiddenFor(x => x.ID)
+    @Html.HiddenFor(x => x.ModifiedAt)
+    @Html.HiddenFor(x => x.ModifiedBy)
+
+    <div class="control-group">
+        @Html.Label(WebModels.WebResources.DateKey, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.DateString, new { @class = "input-block-level datepicker"})
+            @Html.ValidationMessageFor(m=>m.DateString)
+        </div>
+    </div>
+    <div class="validation-group">
+        <div class="controls">
+            @Html.ValidationSummary(true)
+        </div>
+    </div>
+    <div class="form-actions">
+        <button class="k-button" type="submit"><i class="icon-save"></i>@Resources.Common.SaveChanges</button>
+        <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
+    </div>
+    @Html.AntiForgeryToken()
+}
+<script src="~/Content/themes/admin/js/kendoenUS.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        top.winsetup("Sửa ngày khóa sổ", 581,330, true);
+        kendo.culture("en-US");
+    });
+
+    function edit_success() {
+        top.$("#window").data("kendoWindow").close();
+        top.$("#grid").data("kendoGrid").dataSource.read();
+    }
+
+    function thumbprocess(obj, target, noimg) {
+        var state = $(obj).attr("state");
+        var cthumb = $(obj).next().attr('url');
+        if (state == '' || state == null) {
+            $(obj).next().val('');
+            $('#' + target).find('img').attr('src', noimg);
+            $(obj).text("Khôi phục"); $(obj).attr("state", "1")
+        } else {
+            $(obj).text("Xóa");
+            $('#' + target).find('img').attr('src', cthumb);
+            $(obj).next().val(cthumb); $(obj).attr("state", "")
+        }
+    }
+    $(".datepicker").kendoDateTimePicker({
+        format: "dd/MM/yyyy HH:mm",
+        timeFormat: "HH:mm",
+        culture: "vi-VN",
+        value: new Date()
+    });
+    //setTimeout(function () {
+    //    var height = $('form').height();
+    //    window.parent.$(".k-window").height(height + 30);
+    //    $(".k-button").click(function () {
+    //        setTimeout(function () {
+    //            var height = $('form').height();
+    //            window.parent.$(".k-window").height(height + 30);
+    //        }, 100);
+    //    });
+    //}, 100);
+</script>

@@ -1,0 +1,22 @@
+﻿@model IEnumerable<UserProfileViewModel>
+
+@foreach (var item in Model)
+{
+        
+        <img src="@item.Avatar" class="avatar" />
+        <div class="text-infomation">
+            <p class="name-infomation text-16-600">@item.FullName</p>
+            <p class="rank-infomation text-12-400">
+                @item.StationName
+                <img src="~/Images/icon-arrow-down.png" class="img-rank-infomation" />
+            </p>
+        </div>
+}
+<style>
+    .avatar {
+        vertical-align: middle;
+        width: 50px !important;
+        height: 50px !important;
+        border-radius: 20% !important;
+    }
+</style>

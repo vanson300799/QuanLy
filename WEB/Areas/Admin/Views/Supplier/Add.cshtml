@@ -1,0 +1,62 @@
+﻿@model WebModels.Supplier
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
+}
+@using (Html.BeginForm("Add", "Supplier", new { }, FormMethod.Post, new {@id="supplier" , @enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+{
+    <div class="validation-group">
+        <div class="controls">
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.Label("Mã máy", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.SupplierCode, new { @class = "input-block-level" })
+        </div>
+        <span class="form-obligatory">*</span>
+    </div>
+    <div class="control-group">
+        @Html.Label("Tên máy", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.SupplierName, new { @class = "input-block-level" })
+        </div>
+        <span class="form-obligatory">*</span>
+    </div>
+    <div class="control-group">
+        @Html.Label("Nội dung sửa chữa", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.TaxCode, new { @class = "input-block-level" })
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.Label("Ghi chú", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextAreaFor(m => m.Information, new { @class = "input-block-level" })
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button class="k-button" name="submit" value="0" type="submit"><i class="icon-save"></i>@Resources.Common.SaveChanges</button>
+        <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
+    </div>
+    @Html.AntiForgeryToken()
+}
+<script type="text/javascript">
+    top.winsetup("Thêm nội dung sửa chữa", 590, 430, true);
+
+    function create_success() {
+        top.winclose();
+        top.$("#grid").data("kendoGrid").dataSource.read();
+    }
+    setTimeout(function () {
+        var height = $('form').height();
+        window.parent.$(".k-window").height(height + 30);
+        $(".k-button").click(function () {
+            setTimeout(function () {
+                var height = $('form').height();
+                window.parent.$(".k-window").height(height + 30);
+            }, 100);
+        });
+    }, 1000);
+</script>

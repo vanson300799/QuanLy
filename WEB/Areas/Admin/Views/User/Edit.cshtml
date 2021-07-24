@@ -1,0 +1,168 @@
+﻿@model WebModels.UserProfile
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
+}
+
+@using (Html.BeginForm("Edit", "User", new { UserId = Model.UserId  },
+    FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+{
+    @Html.HiddenFor(m=>m.CurrentCode)
+    @Html.HiddenFor(m=>m.CurrentName)
+    <div class="validation-group">
+        <div class="controls">
+            @Html.ValidationSummary(true)
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.LabelFor(m => m.StaffCode, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.StaffCode, new { @class = "input-block-level" })
+            @Html.ValidationMessageFor(m => m.StaffCode)
+        </div>
+        <span class="form-obligatory">*</span>
+    </div>
+    <div class="control-group">
+        @Html.LabelFor(m => m.UserName, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.UserName, new { @class = "input-block-level none-edit", @readonly = "readonly" })
+        </div>
+        <span class="form-obligatory">*</span>
+    </div>
+    <div class="control-group">
+        @Html.Label(WebModels.AccountResources.Shop, new { @class = "control-label" })
+        <div class="controls">
+            <div style="width:99%;">
+                @(Html.Kendo().ComboBoxFor(m => m.StationID)
+                                                      .DataTextField("StationDisplayName")
+                                                      .DataValueField("StationID")
+                                                      .Filter("contains")
+                                                      .Placeholder("Chọn cửa hàng...")
+                                                      .Name("StationID")
+                                                      .HtmlAttributes(new { id = "ComboboxStation" })
+                                                         .Suggest(true)
+                                                      .DataSource(source =>
+                                                      {
+                                                          source.Read(read =>
+                                                          {
+                                                              read.Action("GetStation", "Station");
+                                                          })
+                                                          .ServerFiltering(true);
+                                                      })
+                                                      .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                )
+            </div>
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.Label(WebModels.AccountResources.Role, new { @class = "control-label" })
+        <div class="controls">
+            <div style="width:99%;">
+                @(Html.Kendo().MultiSelect()
+                          .Name("roles")
+                          .DataTextField("RoleName")
+                          .DataValueField("RoleName")
+                          .Placeholder("...")
+                          .DataSource(source =>
+                          {
+                              source.Read(read =>
+                              {
+                                  read.Action("GetRoles", "Role");
+                              })
+                              .ServerFiltering(false);
+                          })
+                          .Value(ViewBag.Roles)
+                )
+            </div>
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.LabelFor(m => m.FullName, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.FullName, new { @class = "input-block-level" })
+
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.LabelFor(m => m.Email, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.Email, new { @class = "input-block-level" })
+            @Html.ValidationMessageFor(m => m.Email)
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.LabelFor(m => m.Mobile, new { @class = "control-label" })
+        <div class="controls">            
+            @Html.TextBoxFor(m => m.Mobile, new { @class = "input-block-level numberOnly", @id = "intPhoneNumber" })
+            @Html.ValidationMessageFor(m => m.Mobile)
+        </div>
+    </div>
+
+
+    <div class="control-group">
+        @Html.LabelFor(m => m.Avatar, new { @class = "control-label" })
+        @Html.HiddenFor(m => m.Avatar, new { id = "hfavatar" })
+        <div class="controls">
+            <div class="fileupload fileupload-new" data-provides="fileupload">
+                <div class="fileupload-new thumbnail" style="width: 120px; height: 100px;">
+                    <img src='@String.Format("{0}", !string.IsNullOrEmpty(Model.Avatar) ? Model.Avatar : ApplicationService.NoImage)' />
+                </div>
+                <div class="fileupload-preview fileupload-exists thumbnail" style="max-width: 120px; max-height: 100px; line-height: 20px;"></div>
+                <div>
+                    <span class="btn btn-file"><span class="fileupload-new">Tải ảnh</span><span class="fileupload-exists">Tải ảnh</span><input type="file" name='image' /></span>
+                    <a href="#" class="btn fileupload-exists" data-dismiss="fileupload">Hủy</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="control-group">
+        @Html.LabelFor(m => m.IsActive, new { @class = "control-label" })
+        <div class="controls">
+            @Html.DropDownListFor(
+                           m => m.IsActive,
+                             new SelectList(new List<SelectListItem>
+                        {
+                      new SelectListItem{ Text="Hiện", Value = "true" },
+                      new SelectListItem{ Text="Ẩn", Value = "false" },
+
+                        }, "Value", "Text")
+         )
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button class="k-button" type="submit"><i class="icon-save"></i>@Resources.Common.SaveChanges</button>
+        <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
+    </div>
+    @Html.AntiForgeryToken()
+}
+<script type="text/javascript">
+    $(document).ready(function () {
+        top.winsetup("Sửa thông tin người dùng", 700, 500, true);
+    });
+
+    function edit_success() {
+        top.$("#window").data("kendoWindow").close();
+        top.$("#grid").data("kendoGrid").dataSource.read();
+    }
+
+    function thumbprocess(obj, target, noimg) {
+        var state = $(obj).attr("state");
+        var cthumb = $(obj).next().attr('url');
+        if (state == '' || state == null) {
+            $(obj).next().val('');
+            $('#' + target).find('img').attr('src', noimg);
+            $(obj).text("Khôi phục"); $(obj).attr("state", "1")
+        } else {
+            $(obj).text("Xóa");
+            $('#' + target).find('img').attr('src', cthumb);
+            $(obj).next().val(cthumb); $(obj).attr("state", "")
+        }
+    }
+</script>
+
+<style>
+    .k-webkit {
+        overflow: auto !important;
+    }
+</style>

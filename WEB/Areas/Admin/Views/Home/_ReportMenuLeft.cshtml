@@ -1,0 +1,11 @@
+﻿@model IEnumerable<WebModels.WebModule>
+<div id="reportMenu">
+    <ul class="report-list" id="report-list">
+        @foreach (var item in Model)
+        {
+            <li class="title-link">
+                <a href="@item.URL" class="menu_report">@item.Title</a>
+            </li>
+        }
+    </ul>
+</div>

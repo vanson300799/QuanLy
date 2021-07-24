@@ -1,0 +1,319 @@
+﻿@model InvoiceManageViewModel
+@{
+    var checkEmployee = WEB.WebHelpers.UserInfoHelper.GetUserData().StationID.HasValue;
+    var minDate = ViewBag.notbookDate;
+}
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
+}
+
+@using (Html.BeginForm("Edit", "InvoiceManage", new { },
+    FormMethod.Post, new { @id = "invoicemanage", enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+{
+    @Html.HiddenFor(m => m.CurrentInvoiceCode, new { @id = "currentcode" })
+    @Html.HiddenFor(x => x.ID)
+    if (checkEmployee)
+    {
+        @Html.HiddenFor(x => x.StationID)
+    }
+
+    <div class="validation-group">
+        @Html.ValidationSummary(true)
+    </div>
+
+    <div class="row">
+        <div class="control-group col-6">
+            @Html.Label(WebModels.WebResources.Date, new { @class = "control-label" })
+            <div class="controls">
+                @Html.TextBoxFor(m => m.DateString, new { @class = "input-block-level datepicker", @id = "Date" })
+                @Html.ValidationMessageFor(m => m.DateString)
+            </div>
+            <span class="form-obligatory">*</span>
+        </div>
+        <div class="control-group col-6">
+            @Html.Label(WebModels.WebResources.BillID, new { @class = "control-label" })
+            <div class="controls">
+                @Html.TextBoxFor(m => m.InvoiceCode, new { @class = "input-block-level", @id = "InvoiceCode" })
+                @Html.ValidationMessageFor(m => m.InvoiceCode)
+            </div>
+            <span class="form-obligatory">*</span>
+        </div>
+
+        <div class="control-group col-6">
+            @Html.Label(WebModels.WebResources.Customer, new { @class = "control-label" })
+            <div class="controls">
+                <div style="width:99%;">
+                    @(Html.Kendo().ComboBoxFor(m => m.CustomerID)
+                                                              .DataTextField("CustomerDisplayName")
+                                                              .DataValueField("ID")
+                                                              .Placeholder("Chọn nhà cung cấp...")
+                                                              .Suggest(true)
+                                                              .Filter("contains")
+                                                              .Name("CustomerID")
+                                                              .HtmlAttributes(new { id = "ComboboxCustomer" })
+                                                              .DataSource(source =>
+                                                              {
+                                                                  source.Read(read =>
+                                                                  {
+                                                                      read.Action("GetCustomer", "Customer");
+                                                                  })
+                                                                  .ServerFiltering(true);
+                                                              })
+                                                              .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                )
+                </div>
+                @Html.ValidationMessageFor(m => m.CustomerID)
+            </div>
+            <span class="form-obligatory">*</span>
+        </div>
+
+        <div class="control-group col-6">
+            @Html.Label(WebModels.WebResources.Shop, new { @class = "control-label" })
+            <div class="controls">
+                @if (checkEmployee)
+                {
+                    @Html.TextBoxFor(m => m.StationName, new { @class = "input-block-level none-edit", @readonly = "readonly" })
+                }
+                else
+                {
+                    <div style="width:99%;">
+                        @(Html.Kendo().ComboBoxFor(m => m.StationID)
+                                                              .DataTextField("StationDisplayName")
+                                                              .DataValueField("ID")
+                                                              .Placeholder("Chọn cửa hàng...")
+                                                              .Suggest(true)
+                                                              .Filter("contains")
+                                                              .Name("StationID")
+                                                              .HtmlAttributes(new { id = "ComboboxStation" })
+                                                              .DataSource(source =>
+                                                              {
+                                                                  source.Read(read =>
+                                                              {
+                                                                  read.Action("GetStation", "Station");
+                                                              })
+                                                                  .ServerFiltering(true);
+                                                              })
+                                                              .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                         )
+                    </div>
+                    @Html.ValidationMessageFor(m => m.StationID)
+                }
+            </div>
+            <span class="form-obligatory">*</span>
+        </div>
+
+        <div class="control-group col-12">
+            @Html.Label(WebModels.WebResources.Information, new { @class = "control-label" })
+            <div class="controls">
+                @Html.TextAreaFor(m => m.Note, new { @class = "input-block-level", @id = "Information" })
+            </div>
+        </div>
+    </div>
+
+    @Html.Action("InvoiceManageDetailView", "InvoiceManage", new { area = "Admin", parentID = Model.ID })
+
+    <div class="totalTable">
+        <div class="flex float-right">
+            <div class="group-total flex">
+                @Html.Label(WebModels.WebResources.TotalQuantity, new { @class = "total-label" })
+                <div class="controls">
+                    @Html.TextBoxFor(m => m.TotalSaleAmount, new { @class = "valid none-edit", @id = "TotalQuantity", @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="group-total flex">
+                @Html.Label(WebModels.WebResources.Tax + " (10%)", new { @class = "total-label" })
+                <div class="controls">
+                    @Html.TextBoxFor(m => m.Tax, new { @class = "valid none-edit", @id = "Tax", @readonly = "readonly" })
+                </div>
+            </div>
+        </div>
+        <div class="flex float-right">
+            <div class="group-total flex">
+                @Html.Label(WebModels.WebResources.Money, new { @class = "total-label" })
+                <div class="controls">
+                    @Html.TextBoxFor(m => m.Money, new { @class = "valid none-edit", @id = "Money", @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="group-total flex">
+                @Html.Label(WebModels.WebResources.TotalMoney, new { @class = "total-label" })
+                <div class="controls">
+                    @Html.TextBoxFor(m => m.TotalMoney, new { @class = "valid none-edit", @id = "TotalMoney", @readonly = "readonly" })
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-actions">
+        <button class="k-button" type="submit" id="save"><i class="icon-save"></i>@Resources.Common.SaveChanges</button>
+        <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
+    </div>
+}
+
+<script type="text/javascript">
+    var datestring = '@(minDate)';
+    var stringarray = datestring.split(" ");
+    var timestring = stringarray[1];
+    var datestring = stringarray[0];
+    var datearray = datestring.split("/");
+    var timearray = timestring.split(":");
+    $(document).ready(function () {
+        if (screen.width > 1500) {
+            top.winsetup("Quản lý hoá đơn", 1440 * 0.9, screen.height * 0.75, true);
+        }
+        else {
+            top.winsetup("Quản lý hoá đơn", screen.width * 0.9, screen.height * 0.7, true);
+        }
+        $('#invoicemanage').submit(function (e) {
+            e.preventDefault();
+        });
+        $("#save").click(function (e) {
+            var model = {};
+            function checkHasStation() {
+                if ('@checkEmployee' === 'True') {
+                    if (!$("#StationID").valid()) {
+                        return true;
+                    }
+                    else {
+                        model.StationID = $("#StationID").val();
+                        return false;
+                    }
+                }
+                else {
+                    if (!$("#ComboboxStation").valid()) {
+                        return true;
+                    }
+                    else {
+                        model.StationID = $("#ComboboxStation").data('kendoComboBox').value()
+                        return false;
+                    }
+                }
+            }
+            if (!$("#Date").valid() || !$("#InvoiceCode").valid() || !$("#ComboboxCustomer").valid() || !$("#currentcode").valid() || checkHasStation()) {
+                return;
+            }
+            model.ID = $("#ID").val();
+            model.CurrentInvoiceCode = $("#currentcode").val();
+            model.InvoiceCode = $("#InvoiceCode").val();
+            model.DateString = $("#Date").val();
+            model.CustomerID = $("#ComboboxCustomer").data('kendoComboBox').value();
+            model.Note = $("#Information").val();
+            // ... continue to set others
+
+            var orderDetailData = $("#DetailView").data("kendoGrid").dataSource.data();
+            model.InvoiceManageDetails = [];
+
+            for (var i = 0; i < orderDetailData.length; i++) {
+                var currentItem = orderDetailData[i];
+
+                var orderDetailObj = {};
+                if (!currentItem.ID || currentItem.ID.toString() == "") {
+                    orderDetailObj.ID = 0;
+                }
+                else {
+                    orderDetailObj.ID = currentItem.ID;
+                };
+                if (typeof currentItem.ProductID === 'object' && currentItem.ProductID !== null) {
+                    orderDetailObj.ProductID = currentItem.ProductID.ID;
+                }
+                else {
+                    orderDetailObj.ProductID = currentItem.ProductID;
+                };
+                orderDetailObj.Date = model.Date;
+                orderDetailObj.SaleAmount = currentItem.SaleAmount;
+                orderDetailObj.Price = currentItem.Price;
+                orderDetailObj.Money = currentItem.Money;
+
+                if (orderDetailObj.SaleAmount !== undefined && orderDetailObj.ProductID !== undefined && orderDetailObj.Price !== undefined && orderDetailObj.Money !== undefined) {
+                    model.InvoiceManageDetails.push(orderDetailObj);
+                }
+
+
+            }
+            //validte model
+            for (var i = 0; i < model.InvoiceManageDetails.length; i++) {
+                if (model.InvoiceManageDetails[i].ProductID == undefined || model.InvoiceManageDetails[i].SaleAmount == undefined || model.InvoiceManageDetails[i].Price == undefined) {
+                    var crequired = true;
+                }
+            }
+
+            if (model.InvoiceManageDetails.length == 0) {
+                var crequired = true;
+            }
+            if ($("span [generated='true']").length != 0) {
+                var crequired = true;
+            }
+            if ($("td [aria-invalid='true']").length != 0) {
+                var crequired = true;
+            }
+
+            if (crequired) {
+                alert("Vui lòng nhập liệu đủ thông tin!");
+                e.preventDefault();
+            }
+            else {
+                            $.ajax({
+                            url: "@Url.Action("Edit", "InvoiceManage")",
+                            contentType: "application/json",
+                            method: "post",
+                            data: JSON.stringify(model),
+                                success: function (data) {
+                                    if (data.message && data.message !== "") {
+                                        alert(data.message);
+                                        return;
+                                    }
+                                edit_success(data);
+                            },
+                            error: function (d) {
+                                console.log(d);
+                            }
+                        });
+                }
+            // let's submit
+
+            function edit_success(data) {
+                if (!data.ErrorMessage || data.ErrorMessage.length === 0) {
+                    top.winclose();
+                    top.$("#grid").data("kendoGrid").dataSource.read();
+                    location.reload();
+                } else {
+                    alert(data.ErrorMessage);
+                }
+            }
+        });
+    });
+
+    $(function () {
+        $("#window").kendoValidator();
+    });
+
+    // let's submit
+    function edit_success(data) {
+        if (!data.ErrorMessage || data.ErrorMessage.length === 0) {
+            top.winclose();
+            top.$("#grid").data("kendoGrid").dataSource.read();
+            location.reload();
+        } else {
+            alert(data.ErrorMessage);
+        }
+    }
+
+    function thumbprocess(obj, target, noimg) {
+        var state = $(obj).attr("state");
+        var cthumb = $(obj).next().attr('url');
+        if (state == '' || state == null) {
+            $(obj).next().val('');
+            $('#' + target).find('img').attr('src', noimg);
+            $(obj).text("Khôi phục"); $(obj).attr("state", "1")
+        } else {
+            $(obj).text("Xóa");
+            $('#' + target).find('img').attr('src', cthumb);
+            $(obj).next().val(cthumb); $(obj).attr("state", "")
+        }
+    }
+
+    $(".datepicker").kendoDateTimePicker({
+        format: "dd/MM/yyyy HH:mm",
+        timeFormat: "HH:mm",
+        culture: "vi-VN",
+        min: new Date(parseInt(datearray[2]), parseInt(datearray[0]) - 1, parseInt(datearray[1]), parseInt(timearray[0]) + 1, 0)
+    });
+</script>

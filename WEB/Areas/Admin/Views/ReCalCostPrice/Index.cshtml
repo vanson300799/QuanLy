@@ -1,0 +1,128 @@
+﻿@model ReCalCostPriceViewModel
+@{
+    WebContext db = new WebContext();
+    var roles = Roles.GetRolesForUser();
+    var userRoleIds = db.WebRoles.Where(x => roles.Contains(x.RoleName)).Select(y => y.RoleId).ToList();
+    var roleWebModule = db.AccessWebModuleRoles.AsNoTracking().FirstOrDefault(x => userRoleIds.Contains(x.RoleId) && x.WebModule.URL == "/admin/ReCalCostPrice");
+}
+@{
+    ViewBag.Title = "Tính lại giá vốn";
+}
+
+<div class="row container-fluid">
+    <div class="span12 row-recacluation manage-car-search row-re-calculate">
+        <div class="pull-left">
+            <div class="breadcrumbs">
+                <h1>@ViewBag.title</h1>
+            </div>
+        </div>
+    </div>
+    <div class="span12 row-recacluation manage-car-search row-re-calculate">
+        @(Html.Kendo().ComboBox().Name("StationID")
+                            .DataTextField("StationDisplayName")
+                            .DataValueField("ID")
+                            .Placeholder("Chọn cửa hàng ...")
+                            .Suggest(true)
+                            .Filter("contains")
+                            .HtmlAttributes(new { id = "ComboboxStation" })
+                            .DataSource(source =>
+                            {
+                                source.Read(read =>
+                                {
+                                    read.Action("GetStation", "Station", new { area="Admin"});
+                                })
+                                .ServerFiltering(true);
+                            })
+                             .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                         )
+        <span id="general-button" class="button-recaluation">
+            <span class="btn-download btn-recal" id="recal">
+                <p class="text-14-500 padding-text-plan-drive">Tính lại</p>
+            </span>
+        </span>
+    </div>
+</div>
+
+<div class="container-fluid" id="dealDetail">
+    <div class="row-fluid">
+        <div class="span12">
+            <div class="box">
+                <div class="box-content nopadding">
+                    <div id="recalDetail"></div>
+                    <script>
+                        // set columns for kendo grid
+                        var columns = [
+                            { field: "ProductID", template: "#=ProductDisplayName#", title: "Hàng hoá", attributes: { "id": "ProductDisplayName" } },
+                            { field: "InvoiceCode", title: "Đơn bán hàng" },
+                            { field: "CostPrice", title: "Giá vốn", attributes: { "class": "total k-number disable" }, template: "#= (data.CostPrice !== undefined) ? kendo.format('{0:n0}đ', parseFloat(data.CostPrice)) : '' #" },
+                            { field: "SaleAmount", title: "Số lượng", attributes: { "class": "total k-number" }, template: "#= (data.SaleAmount!== undefined) ? kendo.format('{0:n2} lít', parseFloat(data.SaleAmount)) : '' #" },
+                            { field: "SalePrice", title: "Giá bán", attributes: { "class": "total k-number" }, template: "#= (data.SalePrice!== undefined) ? kendo.format('{0:n0}đ', parseFloat(data.SalePrice)) : '' #" },
+                            { field: "ListPrice", title: "Giá niêm yết", attributes: { "class": "total k-number" }, template: "#= (data.ListPrice!== undefined) ? kendo.format('{0:n0}đ', parseFloat(data.ListPrice)) : '' #" },
+                            { field: "InvoiceType", template: "#=InvoiceDisplayName#", title: "Loại GD", attributes: { "class": "total", "id": "InvoiceDisplayName" } },
+                            { field: "Money", title: "Thành tiền", attributes: { "class": "total k-number" }, template: "#= (data.Money!== undefined) ? kendo.format('{0:n0}đ', parseFloat(data.Money)) : '' #" },
+                            { field: "CustomerPayment", title: "Khách trả", attributes: { "class": "total" }, template: "#= (data.CustomerPayment!== undefined) ? kendo.format('{0:n0}đ', parseFloat(data.CustomerPayment)) : '' #" }
+                        ];
+
+                        function loaddata(a) {
+                            if ($("#recalDetail").data("kendoGrid") != null) {
+                                $('#recalDetail').html('');
+                                $("#recalDetail").data("kendoGrid");
+                            }
+                            $("#recalDetail").kendoGrid({
+                                scrollable: false,
+                                columns: columns
+                            });
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="d-flex justify-content-center">
+    <div class="loader" style="display:none; margin-top: 30px;"></div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        loaddata();
+    });
+    $("#recal").click(function (e) {
+        $(".loader").show();
+        $("#recalDetail").data('kendoGrid').dataSource.data([]);
+        if ($("#ComboboxStation").val() != "" && $("#ComboboxStation").val() != undefined) {
+            var model = {};
+            model.StationID = $("#ComboboxStation").val();
+            $.ajax({
+                url: "@Url.Action("Index", "ReCalCostPrice")",
+                contentType: "application/json",
+                method: "post",
+                data: JSON.stringify(model),
+                success: function (data) {
+                    if (data.message && data.message !== "") {
+                        alert(data.message);
+                        return;
+                    }
+
+                    show_stack_bottom_right('success', 'Tính lại giá vốn', 'Đã hoàn tất')
+                    //loaddata();
+                    var dataSource = new kendo.data.DataSource({
+                        data: data
+                    });
+                    var grid = $("#recalDetail").data("kendoGrid");
+                    grid.setDataSource(dataSource);
+
+                    $(".loader").hide();
+                },
+                error: function (d) {
+                    console.log(d);
+                }
+            });
+        }
+        else {
+            setTimeout(function () { $(".loader").hide(); }, 1000);
+            alert("Vui Lòng chọn cửa hàng!");
+        }
+
+    });
+</script>

@@ -1,0 +1,234 @@
+﻿@model MoneyReportViewModel
+@{
+    WebContext db = new WebContext();
+    var roles = Roles.GetRolesForUser();
+    var userRoleIds = db.WebRoles.Where(x => roles.Contains(x.RoleName)).Select(y => y.RoleId);
+    var roleWebModule = db.AccessWebModuleRoles.AsNoTracking().FirstOrDefault(x => userRoleIds.Contains(x.RoleId) && x.WebModule.URL == "/admin/DetailCommission");
+    var checkEmployee = WEB.WebHelpers.UserInfoHelper.GetUserData().StationID.HasValue;
+    var totalWeigh = ViewBag.totalWeigh;
+    var totalCostPrice = ViewBag.totalCostPrice;
+}
+@{
+    ViewBag.Title = "Báo cáo tiền mặt";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutReport.cshtml";
+}
+<div class="flex">
+    <div id="general-import">
+        @using (Html.BeginForm("ExportExcel", "MoneyReport", FormMethod.Post, new { @id = "general", enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+        {
+            if (checkEmployee)
+            {
+                @Html.HiddenFor(x => x.StationID)
+            }
+            @Html.HiddenFor(m => m.StartTime)
+            @Html.HiddenFor(m => m.EndTime)
+            <div class="row row-quanlyxe">
+                <div class="block-row">
+                    <div class="flex">
+                        <div class="manage-car-search row-plan-drive">
+                            <p class="text-description-report text-description-report-time">Thời gian chạy báo cáo:</p>
+                            <form action="">
+                                @Html.TextBoxFor(m => m.Time)
+                            </form>
+                        </div>
+                        <div>
+                            @if (checkEmployee)
+                            {
+                                @Html.HiddenFor(m => m.StationName, new { @class = "input-block-level none-edit", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                <p class="text-description-report">Cửa hàng:</p>
+                                @(Html.Kendo().ComboBoxFor(m => m.StationID)
+                            .DataTextField("StationDisplayName")
+                            .DataValueField("ID")
+                            .Placeholder("Chọn cửa hàng ...")
+                            .Suggest(true)
+                            .Filter("contains")
+                            .Name("StationID")
+                            .HtmlAttributes(new { id = "ComboboxStation" })
+                            .DataSource(source =>
+                            {
+                                source.Read(read =>
+                                {
+                                    read.Action("GetStation", "Station");
+                                })
+                                .ServerFiltering(true);
+                            })
+                            .Events(e => e.DataBound("onDataBoundCombobox").Change("onChangeCombobox"))
+                         )
+                            }
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div>
+                            <p class="text-hide-custom">Xuất</p>
+                            <div class="btn-output btn-plan-drive detail-report-button" id="export">
+                                <p class="text-14-500 padding-text-plan-drive detail-export">Chạy Báo Cáo</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-hide-custom">Tải</p>
+                            <div class="btn-download btn-plan-drive detail-report-button" id="download">
+                                <input type="submit" value="Tải file excel" class="text-14-500 padding-text-plan-drive detail-download" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="container-fluid" id="dealDetail">
+            <div class="row-fluid">
+                <div class="span12">
+                    <div class="box">
+                        <div class="box-content nopadding">
+                            <div class="report-title">
+                                <h1>@ViewBag.title</h1>
+                                <h2 id="report-time"></h2>
+                                <h2 id="report-station"></h2>
+                            </div>
+                            <div id="detail-report"></div>
+                            <script>
+                                var rowselected;
+                                var columns = [
+                                    { field: "Count", title: "Thứ tự", width: "100px" },
+                                    {
+                                        field: "DateTime", title: "Ngày tháng", format: "{0: dd-MM-yyyy }", template: "#= kendo.toString(kendo.parseDate(data.DateTime), 'dd/MM/yyyy') #", width: "120px", filterable: {
+                                            ui: function (element) {
+                                                element.kendoDatePicker({
+                                                    culture: 'vi-VN'
+                                                });
+                                            }
+                                        }
+                                    },
+                                    { field: "CustomerName", title: "Khách hàng", footerTemplate: "Tổng", width: "150px" },
+                                    { field: "Vehicle", title: "Phương tiện", width: "150px" },
+                                    { field: "Amount", title: "Số lượng", template: "#= (data.Amount) ? kendo.format('{0:n2} đ', parseFloat(data.Amount)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #", width: "150px" },
+                                    { field: "Money", title: "Thành tiền", template: "#= (data.Money) ? kendo.format('{0:n2} đ', parseFloat(data.Money)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #", width: "150px" },
+                                    { field: "Debt", title: "Nợ", template: "#= (data.Debt) ? kendo.format('{0:n2} đ', parseFloat(data.Debt)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #", width: "150px" },
+                                    { field: "CustomerPayment", title: "Đã thu", template: "#= (data.CustomerPayment) ? kendo.format('{0:n2} đ', parseFloat(data.CustomerPayment)) : '' #", aggregates: ["sum"], footerTemplate: "#= (sum) ? kendo.format('{0:n0} đ', parseFloat(sum)) : '' #", width: "150px" },
+                                    { field: "Note", title: "Ghi chú", width: "150px" }]
+                                function loaddata(model) {
+                                    if ($("#detail-report").data("kendoGrid") != null) { $('#detail-report').html(''); delete $("#detail-report").data("kendoGrid"); }
+                                    $("#detail-report").kendoGrid({
+                                        dataSource: {
+                                            transport: {
+                                                read: {
+                                                    url: "/admin/MoneyReport/MoneyReport_Read/",
+                                                    dataType: "json",
+                                                    data: model
+                                                }
+                                            },
+                                            aggregate: [
+                                                { field: "Amount", aggregate: "sum" },
+                                                { field: "Money", aggregate: "sum" },
+                                                { field: "Debt", aggregate: "sum" },
+                                                { field: "CustomerPayment", aggregate: "sum" },
+                                            ],
+                                            emptyMsg: 'This grid is empty',
+                                            schema: {
+                                                model: {
+                                                    ID: "ID",
+                                                    fields: {
+                                                        Count: { type: "number" },
+                                                        DateTime: { type: "date" },
+                                                        Amount: { type: "number" },
+                                                        Money: { type: "number" },
+                                                        Debt: { type: "number" },
+                                                        CustomerPayment: { type: "number" },
+                                                        Note: { type: "string" },
+                                                    }
+                                                }
+                                            },
+                                        },
+                                        scrollable: true,
+                                        columns: columns,
+                                        filterable: true,
+                                        dataBinding: function () {
+                                            rowselected = new Array();
+                                        },
+                                        dataBound: function () {
+                                            if (this.dataSource.view().length == 0) {
+                                                //insert empty row
+                                                var colspan = this.thead.find("th").length;
+                                                var emptyRow = "<tr><td colspan='" + colspan + "'></td></tr>";
+                                                this.tbody.html(emptyRow);
+
+                                                //workarounds for IE lt 9
+                                                this.table.width(1000);
+                                            }
+                                        },
+                                        change: function () {
+                                            rowselected = [];
+                                            var len = this.select().length;
+                                            for (i = 0; i < len; i++) {
+                                                rowselected.push(this.dataItem(this.select()[i]).ID);
+                                            }
+                                        }
+                                    });
+                                }
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+        $(document).ready(function () {
+            $("#export").click(function () {
+                var modelReport = {};
+                function checkHasStation() {
+                    if ('@checkEmployee' === 'True') {
+                        if (!$("#StationID").valid()) {
+                            return true;
+                        }
+                        else {
+                            modelReport.StationID = $("#StationID").val();
+                            return false;
+                        }
+                    }
+                    else {
+                        if (!$("#ComboboxStation").valid()) {
+                            return true;
+                        }
+                        else {
+                            modelReport.StationID = $("#ComboboxStation").data('kendoComboBox').value()
+                            return false;
+                        }
+                    }
+                }
+                checkHasStation();
+                var timeString = $("#Time").val();
+                var timeArray = timeString.split(" Đến ");
+                var startTime = timeArray[0];
+                var endTime = timeArray[1];
+                modelReport.startTime = startTime;
+                modelReport.endTime = endTime;
+                loaddata(modelReport);
+                $("#report-time").html(timeString);
+                if ('@checkEmployee' === 'True') {
+                loaddata(modelReport);
+                $("#report-station").html("Cửa hàng: " + $("input[name='StationName']").val());
+                } else {
+                   if (modelReport.StationID == null || modelReport.StationID == "") {
+                    alert("Vui lòng chọn cửa hàng");
+                     } else {
+                    loaddata(modelReport);
+                       $("#report-station").html("Cửa hàng: " + $("#ComboboxStation").data('kendoComboBox').text());
+                    };
+                };
+            });
+            $("#download").click(function () {
+                var timeString = $("#Time").val();
+                var timeArray = timeString.split(" Đến ");
+                var startTime = timeArray[0];
+                var endTime = timeArray[1];
+                $("input[name='StartTime']").val(startTime);
+                $("input[name='EndTime']").val(endTime);
+            });
+        });
+</script>
+

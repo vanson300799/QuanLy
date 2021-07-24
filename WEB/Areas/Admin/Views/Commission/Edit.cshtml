@@ -1,0 +1,136 @@
+﻿@model CommissionViewModel
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
+}
+
+@using (Html.BeginForm("Edit", "Commission", FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+{
+    <div class="validation-group">
+        <div class="controls">
+            @Html.ValidationSummary(true)
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.Label(WebModels.WebResources.TimeApply, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.StringTimeApply, new { @class = "input-block-level datepicker" })
+            @Html.ValidationMessageFor(m => m.StringTimeApply)
+        </div>
+        <span class="form-obligatory">*</span>
+    </div>
+    @*<div class="control-group">
+            @Html.Label(WebModels.WebResources.ShoprName, new { @class = "control-label" })
+            <div class="controls">
+                <div style="width:99%;">
+                    @(Html.Kendo().ComboBoxFor(m => m.StationID)
+                                                                      .HtmlAttributes(new { style = "width: 200px" })
+                                                                      .DataTextField("StationDisplayName")
+                                                                      .DataValueField("ID")
+                                                                      .Placeholder("Chọn cửa hàng...")
+                                                                      .Suggest(true)
+                                                                      .Name("Station")
+                                                                      .HtmlAttributes(new { id = "ComboboxStation" })
+                                                                      .Filter("contains")
+                                                                      .DataSource(source =>
+                                                                      {
+                                                                          source.Read(read =>
+                                                                      {
+                                                                          read.Action("GetStation", "Station");
+                                                                      })
+                                                                      .ServerFiltering(true);
+                                                                      })
+                        )
+                </div>
+            </div>
+        </div>*@
+    @*<div class="control-group">
+            @Html.Label(WebModels.WebResources.vehicles, new { @class = "control-label" })
+            <div class="controls">
+                @Html.TextBoxFor(m => m.Vehicle, new { @class = "input-block-level"})
+                @Html.ValidationMessageFor(m => m.Vehicle)
+            </div>
+        </div>*@
+    @*<div class="control-group">
+            @Html.Label(WebModels.WebResources.CustomerName, new { @class = "control-label" })
+            <div class="controls">
+                <div style="width:99%;">
+                    @(Html.Kendo().ComboBoxFor(m => m.CustomerID)
+                                                                      .HtmlAttributes(new { style = "width: 200px" })
+                                                                      .DataTextField("CustomerName")
+                                                                      .DataValueField("ID")
+                                                                      .Placeholder("Chọn khách hàng...")
+                                                                      .Suggest(true)
+                                                                      .Filter("contains")
+                                                                      .DataSource(source =>
+                                                                      {
+                                                                          source.Read(read =>
+                                                                      {
+                                                                          read.Action("GetCustomer", "Customer");
+                                                                      })
+                                                                      .ServerFiltering(true);
+                                                                      })
+                        )
+                </div>
+            </div>
+        </div>*@
+    <div class="control-group">
+        @Html.LabelFor(m => m.CommissionRate, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.CommissionRate, new { @class = "input-block-level  numberOnly", @id = "uIntTextBox" })
+            @Html.ValidationMessageFor(m => m.CommissionRate)
+        </div>
+        <span class="form-obligatory">*</span>
+    </div>
+    <div class="control-group">
+        @Html.Label(WebModels.WebResources.Information, new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextAreaFor(m => m.Information, new { @class = "input-block-level" })
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button class="k-button" type="submit">@Resources.Common.SaveChanges</button>
+        <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
+    </div>
+    @Html.AntiForgeryToken()
+}
+<script type="text/javascript">
+    $(document).ready(function () {
+        top.winsetup("Sửa hoa hồng", 621, 330, true);
+    });
+
+    function edit_success() {
+        top.$("#window").data("kendoWindow").close();
+        top.$("#grid").data("kendoGrid").dataSource.read();
+    }
+
+    function thumbprocess(obj, target, noimg) {
+        var state = $(obj).attr("state");
+        var cthumb = $(obj).next().attr('url');
+        if (state == '' || state == null) {
+            $(obj).next().val('');
+            $('#' + target).find('img').attr('src', noimg);
+            $(obj).text("Khôi phục"); $(obj).attr("state", "1")
+        } else {
+            $(obj).text("Xóa");
+            $('#' + target).find('img').attr('src', cthumb);
+            $(obj).next().val(cthumb); $(obj).attr("state", "")
+        }
+    }
+    $(".datepicker").kendoDateTimePicker({
+        format: "dd/MM/yyyy HH:mm",
+        timeFormat: "HH:mm",
+        culture: "vi-VN",
+        value: new Date()
+    });
+    setTimeout(function () {
+        var height = $('form').height();
+        window.parent.$(".k-window").height(height + 30);
+        $(".k-button").click(function () {
+            setTimeout(function () {
+                var height = $('form').height();
+                window.parent.$(".k-window").height(height + 30);
+            }, 100);
+        });
+    }, 1000);
+</script>
