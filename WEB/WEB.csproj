@@ -2767,7 +2767,6 @@
     <Content Include="Areas\Admin\Views\Account\_Info.cshtml" />
     <Content Include="Areas\Admin\Views\Account\UserProfile.cshtml" />
     <Content Include="Areas\ContentType\Views\Article\_PubIndex.cshtml" />
-    <Content Include="Areas\Admin\Views\Language\_Info.cshtml" />
     <Content Include="Areas\Admin\Views\UploadFile\Index.cshtml" />
     <Content Include="Areas\ContentType\Views\Contact\_PubIndex.cshtml" />
     <Content Include="Areas\ContentType\Views\OnePage\_Index.cshtml" />
