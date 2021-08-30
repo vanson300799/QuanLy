@@ -35,16 +35,10 @@ namespace WebModels
         public DbSet<InvoiceDetail> InvoiceDetails { get; set; }
         public DbSet<InvoiceDetailReport> InvoiceDetailReports { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
-        public DbSet<FreightCharge> FreightCharges { get; set; }
-        public DbSet<DealDetail> DealDetails { get; set; }        
-        public DbSet<Price> Prices { get; set; }
-        public DbSet<ImportOrder> ImportOrders { get; set; }
-        public DbSet<ImportOrderDetail> ImportOrderDetails { get; set; }
-        public DbSet<Commission> Commissions { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ListedPrice> ListedPrices { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
-        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Rent> Rents { get; set; }
         public DbSet<Station> Stations { get; set; }
         public DbSet<LogSystem> LogSystems { get; set; }
         public DbSet<NoteBookKey> NoteBookKeys { get; set; }

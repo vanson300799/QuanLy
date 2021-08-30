@@ -14,7 +14,7 @@ using WebModels.Constants;
 namespace WEB.Areas.Admin.Controllers
 {
     [PetroAuthorizeAttribute]
-    public class ProductController : Controller
+    public class RentController : Controller
     {
         // GET: Admin/Product
         WebContext db = new WebContext();
@@ -28,30 +28,21 @@ namespace WEB.Areas.Admin.Controllers
             return View();
         }
         [AllowAnonymous]
-        public ActionResult Product_Read([DataSourceRequest] DataSourceRequest request)
+        public ActionResult Rent_Read([DataSourceRequest] DataSourceRequest request)
         {
-            var users = db.Products.AsNoTracking()
-                        .Where(x => x.IsActive == true)
-                        .Select(x => new ProductViewModel()
-                        {
-                            ID = x.ID,
-                            ProductCode = x.ProductCode,
-                            ProductName = x.ProductName,
-                            Position = x.Position,
-                            Information = x.Information,
-                            ModifiedAt = (DateTime)x.ModifiedAt
-                        });
-            List<ProductViewModel> listproduct = new List<ProductViewModel>();
+            IEnumerable<Rent> users = db.Rents.Where(x => x.IsActive == true).ToList();
+            List<Rent> listproduct = new List<Rent>();
             foreach (var item in users)
             {
-                var product = new ProductViewModel
+                var product = new Rent
                 {
                     ID = item.ID,
                     ProductCode = item.ProductCode,
                     ProductName = item.ProductName,
-                    Information = item.Information,
-                    ModifiedAt = item.ModifiedAt,
-                    Position = item.Position,
+                    CompanyRent = item.CompanyRent,
+                    CreatedAt = item.CreatedAt,
+                    TimeRent = item.TimeRent,
+                    Price = item.Price
                 };
                 listproduct.Add(product);
             }
@@ -62,7 +53,7 @@ namespace WEB.Areas.Admin.Controllers
         [AllowAnonymous]
         public JsonResult GetProduct(string text)
         {
-            var shop = from x in db.Products.AsNoTracking()
+            var shop = from x in db.Rents.AsNoTracking()
                        where (x.IsActive == true)
                        select x;
             if (!string.IsNullOrEmpty(text))
@@ -81,49 +72,24 @@ namespace WEB.Areas.Admin.Controllers
         public ActionResult Add()
         {
 
-            var model = new ProductViewModel();
+            var model = new Rent();
             return View(model);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ValidateInput(false)]
-        public ActionResult Add([Bind(Exclude = "")] ProductViewModel viewModel)
+        public ActionResult Add([Bind(Exclude = "")] Rent viewModel)
         {
-            var productChange = viewModel.ToJson();
             var currentUser = UserInfoHelper.GetUserData();
             if (ModelState.IsValid)
-            {
-                var temp = (from p in db.Set<Product>().AsNoTracking()
-                            where (p.IsActive && p.ProductCode.Equals(viewModel.ProductCode, StringComparison.OrdinalIgnoreCase))
-                            select p).FirstOrDefault();
-                if (temp != null)
                 {
-                    ModelState.AddModelError("", WebResources.CommodityIdExists);
-                    return View(viewModel);
-                }
-                else
-                {
-                    var config = new MapperConfiguration(cfg => cfg.CreateMap<ProductViewModel, Product>());
-                    IMapper iMapper = config.CreateMapper();
-                    var model = iMapper.Map<Product>(viewModel);
-                    model.IsActive = true;
-                    model.CreatedBy = currentUser.UserId;
-                    model.CreatedAt = DateTime.Now;
-                    db.Set<Product>().Add(model);
-
+                    viewModel.IsActive = true;
+                    viewModel.CreatedBy = currentUser.UserId;
+                    viewModel.CreatedAt = DateTime.Now;
+                    db.Set<Rent>().Add(viewModel);
                     db.SaveChanges();
-                    LogSystem log = new LogSystem
-                    {
-                        ActiveType = DataActionTypeConstant.ADD_COMMODITY_CATEGORY_ACTION,
-                        FunctionName = DataFunctionNameConstant.ADD_COMMODITY_CATEGORY_FUNCTION,
-                        DataTable = DataTableConstant.PRODUCT,
-                        Information = productChange
-                    };
-
-                    AddLogSystem.AddLog(log);
                     ViewBag.StartupScript = "create_success();";
                     return View(viewModel);
-                }
             }
             else
             {
@@ -182,7 +148,7 @@ namespace WEB.Areas.Admin.Controllers
                             UserChange = currentUser.FullName
                         };
 
-                        if(modelStation.PositionNew != modelStation.PositionOld)
+                        if (modelStation.PositionNew != modelStation.PositionOld)
                         {
                             db.Set<Station>().Add(modelStation);
                         }
@@ -236,7 +202,7 @@ namespace WEB.Areas.Admin.Controllers
         }
 
         [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult Product_Destroy([DataSourceRequest] DataSourceRequest request,
+        public ActionResult Rent_Destroy([DataSourceRequest] DataSourceRequest request,
             [Bind(Prefix = "models")] IEnumerable<ProductViewModel> models)
         {
             var productChangeJson = models.ToJson();

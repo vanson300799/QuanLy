@@ -72,8 +72,8 @@ namespace WebModels
         public DateTime? CreatedAt { get; set; }
     }
 
-    [Table("Customer")]
-    public partial class Customer
+    [Table("Rent")]
+    public partial class Rent
     {
         [Key]
         [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
@@ -81,25 +81,17 @@ namespace WebModels
         public int ID { get; set; }
         [Display(ResourceType = typeof(WebResources), Name = "CustomerID")]
         [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredCustomerID")]
-        public string CustomerCode { get; set; }
-        [NotMapped]
-        public string CurrentCode { get; set; }
+        public string ProductCode { get; set; }
+
         [Display(ResourceType = typeof(WebResources), Name = "CustomerName")]
         [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredCustomerName")]
-        public string CustomerName { get; set; }
+        public string ProductName { get; set; }
 
         [Display(ResourceType = typeof(WebResources), Name = "TaxCode")]
-        public string TaxCode { get; set; }
+        public string CompanyRent { get; set; }
         [Display(ResourceType = typeof(WebResources), Name = "CustomerAddress")]
-        public string CustomerAddress { get; set; }
-        [Range(0, 999999999999, ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "UintMoneyNotValid")]
-        [RegularExpression(@"^(\d{0,12})$", ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "UintMoneyNotValid")]
-        [Display(ResourceType = typeof(WebResources), Name = "Phone")]
-        public string PhoneNumber { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "Information")]
-        public string Information { get; set; }
-
+        public int TimeRent { get; set; }
+        public int Price { get; set; }
         [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
         public bool IsActive { get; set; }
 
@@ -277,267 +269,6 @@ namespace WebModels
         [Display(ResourceType = typeof(WebResources), Name = "ModifiedDate")]
         public DateTime? ModifiedAt { get; set; }
 
-    }
-    [Table("Price")]
-    public partial class Price
-    {
-        [Key]
-        [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
-        [Display(ResourceType = typeof(WebResources), Name = "ID")]
-        public int ID { get; set; }
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "TimeApply")]
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredTimeApply")]
-        public DateTime? TimeApply { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "CommodityID")]
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredProduct")]
-        public int ProductID { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ShopID")]
-        public int? StationID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "Price")]
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredPriceListed")]
-        [Range(0, 99999999.99, ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredPriceListed")]
-        [RegularExpression(@"^(0|-?\d{0,8}(\.\d{0,2})?)$", ErrorMessageResourceType = typeof(AccountResources), ErrorMessageResourceName = "NumberFormatError")]
-        public decimal? Prices { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "Information")]
-        public string Information { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
-        public bool IsActive { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedBy")]
-        public int CreatedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedAt")]
-        public DateTime CreatedAt { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedBy")]
-        public int? ModifiedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedDate")]
-        public DateTime? ModifiedAt { get; set; }
-
-    }
-
-    [Table("Commission")]
-    public partial class Commission
-    {
-        [Key]
-        [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
-        [Display(ResourceType = typeof(WebResources), Name = "ID")]
-        public int ID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "TimeApply")]
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredTimeApply")]
-        public DateTime TimeApply { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ShopID")]
-        public Nullable<int> StationID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "CustomerID")]
-        public Nullable<int> CustomerID { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "Commission")]
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredPriceListed")]
-        [Range(0, 999999999999, ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "UintMoneyNotValid")]
-        [RegularExpression(@"^(\d{0,12})$", ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "UintMoneyNotValid")]
-        public Nullable<decimal> CommissionRate { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "Information")]
-        public string Information { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
-        public bool IsActive { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedBy")]
-        public int CreatedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedAt")]
-        public DateTime? CreatedAt { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedBy")]
-        public Nullable<int> ModifiedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedDate")]
-        public DateTime? ModifiedAt { get; set; }
-        public string Vehicle { get; set; }
-
-    }
-
-    [Table("FreightCharge")]
-    public partial class FreightCharge
-    {
-        [Key]
-        [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
-        [Display(ResourceType = typeof(WebResources), Name = "ID")]
-        public int ID { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "TimeApply")]
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredTimeApply")]
-        public DateTime TimeApply { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ShopID")]
-        public Nullable<int> StationID { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "Information")]
-        public string Information { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "IsLock")]
-        public bool IsLock { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
-        public bool IsActive { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedBy")]
-        public int CreatedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedAt")]
-        public DateTime? CreatedAt { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedBy")]
-        public int ModifiedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedDate")]
-        public DateTime? ModifiedAt { get; set; }
-    }
-
-    [Table("DealDetail")]
-    public partial class DealDetail
-    {
-        [Key]
-        [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
-        [Display(ResourceType = typeof(WebResources), Name = "ID")]
-        public int ID { get; set; }
-        public int ParentID { get; set; }
-        public DateTime? Date { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ShopID")]
-        public Nullable<int> StationID { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "Information")]
-        public string Description { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public decimal FreightCharge { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
-        public bool IsActive { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedBy")]
-        public int CreatedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedAt")]
-        public DateTime? CreatedAt { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedBy")]
-        public int ModifiedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedDate")]
-        public DateTime? ModifiedAt { get; set; }
-
-        [ForeignKey("ParentID")]
-        public virtual FreightCharge FreightCharges { get; set; }
-    }
-
-    [Table("ImportOrder")]
-    public partial class ImportOrder
-    {
-        [Key]
-        [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
-        [Display(ResourceType = typeof(WebResources), Name = "ID")]
-        public int ID { get; set; }
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "DateTime")]
-        public DateTime? Date { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "BillID")]
-        public string InvoiceCode { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ShopID")]
-        public int? StationID { get; set; }
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "SupplierRequired")]
-        [Display(ResourceType = typeof(WebResources), Name = "SupplierID")]
-        public int? SupplierID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "Commission")]
-        public decimal TotalQuantity { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "Commission")]
-        public decimal TotalMoney { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "Information")]
-        public string Information { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
-        public bool IsActive { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
-        public bool IsLock { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedBy")]
-        public int CreatedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedAt")]
-        public DateTime? CreatedAt { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedBy")]
-        public Nullable<int> ModifiedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedDate")]
-        public DateTime? ModifiedAt { get; set; }
-    }
-
-    [Table("ImportOrderDetail")]
-    public partial class ImportOrderDetail
-    {
-        [Key]
-        [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
-        [Display(ResourceType = typeof(WebResources), Name = "ID")]
-        public int ID { get; set; }
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "DateTime")]
-        public DateTime? Date { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ID")]
-        public int ParrentID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "CommodityID")]
-        public int ProductID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "ShopID")]
-        public int? StationID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "SupplierID")]
-        public int? SupplierID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "InputNumber")]
-        public decimal InputNumber { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "InputPrice")]
-        public decimal InputPrice { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "Money")]
-        public decimal Money { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
-        public bool IsActive { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedBy")]
-        public int CreatedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedAt")]
-        public DateTime CreatedAt { get; set; }
-
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedBy")]
-        public Nullable<int> ModifiedBy { get; set; }
-
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedDate")]
-        public DateTime? ModifiedAt { get; set; }
-
-        [ForeignKey("ParrentID")]
-        public virtual ImportOrder ImportOrder { get; set; }
     }
 
     [Table("InvoiceDetail")]

@@ -31,19 +31,6 @@ namespace WEB.Models
         public int? CustomerID { get; set; }
 
         public List<int?> CustomerIDs { get; set; }
-        public IEnumerable<Customer> Customers { get; set; }
-        public string CustomerName
-        {
-            get
-            {
-                if (Customers == null)
-                {
-                    return string.Empty;
-                }
-
-                return string.Join(", ", Customers.Select(x => x.CustomerName));
-            }
-        }
         public string Information { get; set; }
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

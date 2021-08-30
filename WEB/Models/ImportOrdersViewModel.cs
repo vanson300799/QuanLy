@@ -32,6 +32,5 @@ namespace WEB.Models
         public int? ModifiedBy { get; set; }
         public DateTime? ModifiedAt { get; set; }
         public string CurrentBillID { get; set; }
-        public IEnumerable<ImportOrderDetail> ImportOrdersDetails { get; set; }
     }
 }

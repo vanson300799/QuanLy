@@ -1,0 +1,181 @@
+﻿
+@{
+    ViewBag.Title = "Danh Mục Hàng Hóa";
+}
+@{
+    WebContext db = new WebContext();
+    var roles = Roles.GetRolesForUser();
+    var userRoleIds = db.WebRoles.Where(x => roles.Contains(x.RoleName)).Select(y => y.RoleId).ToList();
+    var roleWebModule = db.AccessWebModuleRoles.AsNoTracking().FirstOrDefault(x => userRoleIds.Contains(x.RoleId) && x.WebModule.URL == "/admin/Rent");
+
+}
+
+<script type="text/javascript">
+    function error_handler(e) {
+        if (e.errors) {
+            var message = "Errors:\n";
+            $.each(e.errors, function (key, value) {
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += this + "\n";
+                    });
+                }
+            });
+            alert(message);
+        }
+    }
+    var rowselected = [];
+    function change_handler(e) {
+        rowselected = [];
+        var len = this.select().length;
+        for (i = 0; i < len; i++) {
+            rowselected.push(this.dataItem(this.select()[i]).ID);
+        }
+    }
+    function binding_handler(e) {
+        rowselected = [];
+    }
+    function changepassword_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Rent/changepassword/?userName=" + dataItem.UserName);
+    }
+    function delete_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Rent/delete/" + dataItem.ID);
+    }
+
+    function edit_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Rent/edit/" + dataItem.ID);
+    }
+
+    function modules_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Rent/ModulesMapping/" + dataItem.ID);
+
+    }
+    function sites_handler(e) {
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        opendlg("/admin/Rent/AdminSitesMapping/" + dataItem.ID);
+    }
+
+    $(document).ready(function () {
+        $("#btnadd").click(function () {
+            opendlg("/admin/Rent/add");
+        });
+        $("#btnedit").click(function () {
+            if (rowselected.length > 0) {
+                opendlg("/admin/Rent/edit/" + rowselected[0]);
+            } else {
+                alert("Không có khoản mục nào được chọn.");
+            }
+        });
+        $("#btndelete").click(function () {
+            if (rowselected.length > 0) {
+                opendlg("/admin/Rent/deletes/" + rowselected);
+            } else {
+                alert("Không có khoản mục nào được chọn.");
+            }
+        });
+    });
+</script>
+
+<div id="main">
+    <div id="left"></div>
+    @if (roleWebModule != null && roleWebModule.View.HasValue && !roleWebModule.View.Value)
+    {
+        @Html.Action("Denied", "Account", new { area = "admin" })
+    }
+    @if (roleWebModule != null && roleWebModule.View.HasValue && roleWebModule.View.Value)
+    {
+        <div class="container-fluid">
+            <div class="page-header">
+                <div class="pull-left">
+                    <div class="breadcrumbs">
+                        <h1>Quản lý máy móc</h1>
+                    </div>
+                </div>
+                <div class="pull-right">
+                    <ul class="actions">
+                        @if (roleWebModule != null && roleWebModule.Add.HasValue && roleWebModule.Add.Value)
+                        {
+                            <li>
+                                <a href="#" id="btnadd" class="k-button"><i class="icon-plus"></i> <span>@WebResources.Add</span>  </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <div class="row-fluid">
+                <div class="span12">
+                    <div class="box">
+                        <div class="box-content nopadding">
+                            @(Html.Kendo().Grid<Rent>()
+                            .Name("grid")
+                            .Columns(columns =>
+                            {
+                                columns.Bound(p => p.ProductCode).Title("Mã máy").Width(150).HtmlAttributes(new { style = "text-align:center;" });
+                                columns.Bound(p => p.ProductName).Title("Tên máy");
+                                columns.Bound(p => p.CompanyRent).Title("Công ty thuê").HtmlAttributes(new { style = "text-align:center;" });
+                                columns.Bound(p => p.TimeRent).Title("Thời gian thuê");
+                                columns.Bound(p => p.Price).Title("Đơn giá (VNĐ)");
+                                columns.Bound(p => p.CreatedAt).Title("Ngày cho thuê")
+                                .Filterable(filterable =>filterable.UI(@<text>function (element) {
+                                                element.kendoDateTimePicker({
+                                                    culture: 'vi-VN'
+                                                });
+                                            }</text>))
+                                .Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:center;" });
+                                columns.Command(command =>
+                                {
+                                    if (roleWebModule != null && roleWebModule.Edit.HasValue && roleWebModule.Edit.Value)
+                                    {
+                                        command.Custom(Resources.Common.Edit).Click("edit_handler");
+                                    }
+                                    if (roleWebModule != null && roleWebModule.Delete.HasValue && roleWebModule.Delete.Value)
+                                    {
+                                        command.Destroy();
+                                    }
+                                }).HtmlAttributes(new { style = "text-align:center;" }).Title("Hành động").Width(155);
+                            })
+                            .Pageable()
+                            .Selectable(select => select.Mode(GridSelectionMode.Multiple))
+                            .Sortable()
+                            .Filterable()
+                            .Editable(ed => ed.DisplayDeleteConfirmation("Bạn có chắc chắn xoá mục này?"))
+                            .DataSource(dataSource => dataSource
+                                .Ajax()
+                                .Batch(true)
+                                .Events(events => events.Error("error_handler"))
+                                .Model(model =>
+                                {
+                                    model.Id(p => p.ID);
+                                    model.Field(p => p.ID).Editable(false);
+                                })
+                                .PageSize(10)
+                                .Read(read => read.Action("Rent_Read", "Rent"))
+                                //.Create(create => create.Action("Rent_Create", "Rent"))
+                                //.Update(update => update.Action("Rent_Update", "Rent"))
+                                .Destroy(destroy => destroy.Action("Rent_Destroy", "Rent"))
+                             )
+                              .Events(events => events.Change("change_handler").DataBinding("binding_handler"))
+                            )
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    }
+</div>
+<style>
+    .k-webkit {
+        overflow: auto !important;
+    }
+</style>

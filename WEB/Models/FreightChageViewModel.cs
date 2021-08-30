@@ -36,7 +36,6 @@ namespace WEB.Models
 
         public string StationCode { get; set; }
 
-        public IEnumerable<DealDetail> DealDetails { get; set; }
 
     }
 }

@@ -1,9 +1,9 @@
-﻿@model ProductViewModel
+﻿@model Rent
 
 @{
     Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
 }
-@using (Html.BeginForm("Add", "Product", new { }, FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+@using (Html.BeginForm("Add", "Rent", new { }, FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal fix" }))
 {
     <div class="validation-group">
         <div class="controls">
@@ -27,19 +27,23 @@
         <span class="form-obligatory">*</span>
     </div>
     <div class="control-group">
-        @Html.Label("Vị trí", new { @class = "control-label" })
+        @Html.Label("Công ty thuê", new { @class = "control-label" })
         <div class="controls">
-            @Html.TextBoxFor(m => m.Position, new { @class = "input-block-level" })
+            @Html.TextBoxFor(m => m.CompanyRent, new { @class = "input-block-level" })
         </div>
-        <span class="form-obligatory">*</span>
     </div>
     <div class="control-group">
-        @Html.Label("Thông tin máy", new { @class = "control-label" })
+        @Html.Label("Thời gian thuê (Tháng)", new { @class = "control-label" })
         <div class="controls">
-            @Html.TextAreaFor(m => m.Information, new { @class = "input-block-level" })
+            @Html.TextBoxFor(m => m.TimeRent, new { @class = "input-block-level" })
         </div>
     </div>
-
+    <div class="control-group">
+        @Html.Label("Giá (đồng)", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.Price, new { @class = "input-block-level" })
+        </div>
+    </div>
     <div class="form-actions">
         <button class="k-button" name="submit" value="0" type="submit"><i class="icon-save"></i>@Resources.Common.SaveChanges</button>
         <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>

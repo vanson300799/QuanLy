@@ -8,8 +8,6 @@ namespace WEB.Models
 {
     public class ImportOrderDetailState
     {
-        public ImportOrderDetail ImportOrderDetail { get; set; }
-
         public decimal QuantityLeft { get; set; }
     }
 }
