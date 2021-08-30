@@ -345,55 +345,9 @@ namespace WEB.Areas.ContentType.Controllers
         //List new
         public ActionResult _PubIndex(int id, string metatitle, int? nam)
         {
-            int? year = DateTime.Now.Year;
+           
 
-            if (nam != null && nam > 0)
-            {
-                year = nam;
-            }
-
-            ViewBag.RouteValues = new RouteValueDictionary(new
-            {
-                controller = ControllerContext.ParentActionViewContext.RouteData.Values["controller"],
-                action = ControllerContext.ParentActionViewContext.RouteData.Values["action"],
-                area = ControllerContext.ParentActionViewContext.RouteData.Values["area"]
-            });
-            WebModule webmodule = null;
-            if (TempData["WebModule"] != null)
-            {
-                webmodule = TempData["WebModule"] as WebModule;
-            }
-            else webmodule = db.Set<WebModule>().Find(id);
-            var contents = new List<WebContent>();
-            ViewBag.WebModule = webmodule;
-            contents = db.WebContents.Where(x => x.WebModuleID == id && x.Status.HasValue && x.Status.Value.Equals((int)Status.Public)).ToList();
-            var sub = webmodule.SubWebModules.Where(x => x.Status == (int)Status.Public);
-            if (sub.Any())
-            {
-                foreach (var item in sub)
-                {
-                    var lstContentSub = db.WebContents.Where(x => x.WebModuleID == item.ID && x.Status.HasValue && x.Status.Value.Equals((int)Status.Public)).ToList();
-                    if (lstContentSub.Any())
-                    {
-                        contents.AddRange(lstContentSub);
-                    }
-                }
-            }
-
-            //&& x.PublishDate.Value.Year == year
-            
-            var lstYear = contents.Where(x=> x.PublishDate.HasValue).Select(x => new ObjectTemp
-            {
-                ID = x.PublishDate.Value.Year
-            }).Select(m => new { m.ID }).Distinct().OrderBy(x => x.ID).ToList();
-
-            ViewBag.LstNam = lstYear;
-            ViewBag.Year = year;
-            //
-
-            contents = contents.Where(x => x.PublishDate.HasValue && x.PublishDate.Value.Year == year).OrderByDescending(x => x.CreatedDate).ToList();
-
-            return PartialView(contents);
+            return PartialView();
             //var ipage = 1; if (page != null) ipage = page.Value;
             //ViewBag.TotalItemCount = contents.Count();
             //ViewBag.CurrentPage = ipage;
