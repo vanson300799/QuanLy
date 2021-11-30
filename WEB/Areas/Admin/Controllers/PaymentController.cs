@@ -13,7 +13,7 @@ using WebModels.Constants;
 namespace WEB.Areas.Admin.Controllers
 {
     [PetroAuthorizeAttribute]
-    public class SupplierController : Controller
+    public class PaymentController : Controller
     {
         // GET: Admin/Supplier
         WebContext db = new WebContext();
@@ -27,22 +27,26 @@ namespace WEB.Areas.Admin.Controllers
             return View();
         }
         [AllowAnonymous]
-        public ActionResult Supplier_Read([DataSourceRequest] DataSourceRequest request)
+        public ActionResult Payment_Read([DataSourceRequest] DataSourceRequest request)
         {
-            var users = db.Suppliers.AsNoTracking()
-                        .Where(x => x.IsActive == true)
-                        .Select(x => new SupplierViewModel()
+            var users = db.Rents.AsNoTracking()
+                        .Where(x => x.IsActive == true && x.Products != null && x.Status != 1).ToList().Select(x => new Rent()
                         {
+                            Number = x.Number,
+                            CreatedAt = x.CreatedAt,
+                            CompanyRent = x.CompanyRent,
+                            CreatedBy = x.CreatedBy,
+                            DeliveryTime = x.DeliveryTime,
                             ID = x.ID,
-                            SupplierCode = x.SupplierCode,
-                            SupplierName = x.SupplierName,
-                            TaxCode = x.TaxCode,
-                            SupplierAddress = x.SupplierAddress,
-                            PhoneNumber = x.PhoneNumber,
-                            Information = x.Information,
-                            ModifiedAt = (DateTime)x.ModifiedAt,
-                            CreatedAt = (DateTime)x.CreatedAt
-                        });
+                            IsActive = x.IsActive,
+                            ModifiedAt = x.ModifiedAt,
+                            ModifiedBy = x.ModifiedBy,
+                            Price = x.Price,
+                            ProductCode = x.Products.ProductCode,
+                            ProductName = x.Products.ProductName
+                        }).ToList();
+
+
             return Json(users.ToDataSourceResult(request));
         }
         [AllowAnonymous]
@@ -65,46 +69,60 @@ namespace WEB.Areas.Admin.Controllers
             }), JsonRequestBehavior.AllowGet);
         }
         //kendoOld
-        public ActionResult Add()
+        public ActionResult Add(string lstRent)
         {
+            string[] lstId = lstRent.Split(',');
+            ViewBag.Data = lstRent;
+            List<int> lstInt = new List<int>();
+            foreach (var item in lstId)
+            {
 
-            var model = new Supplier();
-            return View(model);
+                lstInt.Add(Int32.Parse(item));
+            }
+            var lstPayment = db.Rents.Where(x => lstInt.Contains(x.ID)).ToList().Select(x => new Rent()
+            {
+                CompanyRent = x.CompanyRent,
+                CreatedAt = x.CreatedAt,
+                CreatedBy = x.CreatedBy,
+                DeliveryTime = x.DeliveryTime,
+                ID = x.ID,
+                Products = x.Products,
+                ProductName = x.Products.ProductName,
+                Number = x.Number,
+                Price = (x.CreatedAt.Value - DateTime.Now).Days + 1,
+                Total = (x.Products.Price ?? 0 ) * (x.Number ?? 0) * ((x.CreatedAt.Value - DateTime.Now).Days + 1)
+            }).ToList();
+            ViewBag.Total = lstPayment.Select(x => x.Total).Sum();
+            return View(lstPayment);
         }
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        [ValidateInput(false)]
-        public ActionResult Add([Bind(Exclude = "")] Supplier model)
+        public ActionResult Add(string lstRent, int? other)
         {
-            var supplierChangeJson = model.ToJson();
-            var currentUser = UserInfoHelper.GetUserData();
-            if (ModelState.IsValid)
+            string[] lstId = lstRent.Split(',');
+            ViewBag.Data = lstRent;
+            ViewBag.Total = 3121241;
+            List<int> lstInt = new List<int>();
+            foreach (var item in lstId)
             {
+                lstInt.Add(Int32.Parse(item));
+            }
+            var lstPayment = db.Rents.Where(x => lstInt.Contains(x.ID)).ToList();
 
-                model.IsActive = true;
-                model.CreatedBy = currentUser.UserId;
-                model.CreatedAt = DateTime.Now;
-                model.PhoneNumber = currentUser.FullName;
-                db.Set<Supplier>().Add(model);
-
+            foreach(var item in lstPayment)
+            {
+                item.TimeRent = (item.CreatedAt.Value - DateTime.Now).Days + 1;
+                item.DeliveryTime = DateTime.Now.Date;
+                item.Status = 1;
+                item.Total = (item.Products.Price ?? 0) * (item.Number ?? 0) * ((item.CreatedAt.Value - DateTime.Now).Days + 1);
+                db.Rents.Attach(item);
+                db.Entry(item).Property(a => a.Total).IsModified = true;
+                db.Entry(item).Property(a => a.Status).IsModified = true;
+                db.Entry(item).Property(a => a.DeliveryTime).IsModified = true;
+                db.Entry(item).Property(a => a.TimeRent).IsModified = true;
                 db.SaveChanges();
-                LogSystem log = new LogSystem
-                {
-                    ActiveType = DataActionTypeConstant.ADD_SUPPLIER_CATEGORY_ACTION,
-                    FunctionName = DataFunctionNameConstant.ADD_SUPPLIER_CATEGORY_FUNCTION,
-                    DataTable = DataTableConstant.SUPPLIER,
-                    Information = supplierChangeJson
-                };
-
-                AddLogSystem.AddLog(log);
-                ViewBag.StartupScript = "create_success();";
-                return View(model);
-    
-            }
-            else
-            {
-                return View(model);
-            }
+            };
+            ViewBag.StartupScript = "create_success();";
+            return View(lstPayment);
         }
 
         public ActionResult Edit(int id)

@@ -115,32 +115,27 @@
                     <div class="box">
                         <div class="box-content nopadding">
                             @(Html.Kendo().Grid<ProductViewModel>()
-                            .Name("grid")
-                            .Columns(columns =>
+                        .Name("grid")
+                        .Columns(columns =>
+                        {
+                            columns.Bound(p => p.ProductName).Title("Tên máy");
+                            columns.Bound(p => p.Price).Format("{0:N0}+ đ/ngày").Title("Đơn giá");
+                            columns.Bound(p => p.Position).Title("Vị trí").HtmlAttributes(new { style = "text-align:center;" });
+                            columns.Bound(p => p.Number).Title("Số lượng");
+
+                            columns.Bound(p => p.Information).Title("Thông tin máy");
+                            columns.Command(command =>
                             {
-                                columns.Bound(p => p.ProductCode).Title("Mã máy").Width(150).HtmlAttributes(new { style = "text-align:center;" });
-                                columns.Bound(p => p.ProductName).Title("Tên máy");
-                                columns.Bound(p => p.Position).Title("Vị trí").HtmlAttributes(new { style = "text-align:center;" });
-                                columns.Bound(p => p.Information).Title("Thông tin máy");
-                                columns.Bound(p => p.ModifiedAt).Title("Ngày chỉnh sửa")
-                                .Filterable(filterable =>filterable.UI(@<text>function (element) {
-                                                element.kendoDateTimePicker({
-                                                    culture: 'vi-VN'
-                                                });
-                                            }</text>))
-                                .Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:center;" });
-                                columns.Command(command =>
+                                if (roleWebModule != null && roleWebModule.Edit.HasValue && roleWebModule.Edit.Value)
                                 {
-                                    if (roleWebModule != null && roleWebModule.Edit.HasValue && roleWebModule.Edit.Value)
-                                    {
-                                        command.Custom(Resources.Common.Edit).Click("edit_handler");
-                                    }
-                                    if (roleWebModule != null && roleWebModule.Delete.HasValue && roleWebModule.Delete.Value)
-                                    {
-                                        command.Destroy();
-                                    }
-                                }).HtmlAttributes(new { style = "text-align:center;" }).Title("Hành động").Width(155);
-                            })
+                                    command.Custom(Resources.Common.Edit).Click("edit_handler");
+                                }
+                                if (roleWebModule != null && roleWebModule.Delete.HasValue && roleWebModule.Delete.Value)
+                                {
+                                    command.Destroy();
+                                }
+                            }).HtmlAttributes(new { style = "text-align:center;" }).Title("Hành động").Width(155);
+                        })
                             .Pageable()
                             .Selectable(select => select.Mode(GridSelectionMode.Multiple))
                             .Sortable()

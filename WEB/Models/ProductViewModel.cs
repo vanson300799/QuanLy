@@ -30,5 +30,8 @@ namespace WEB.Models
         public int ModifiedBy { get; set; }
         public Nullable<DateTime> ModifiedAt { get; set; }
         public string Image { get; set; }
+        public int? Price { get; set; }
+        public int? Number { get; set; }
+        public int? Rest { get; set; }
     }
 }

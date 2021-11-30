@@ -82,14 +82,14 @@ namespace WEB.Areas.Admin.Controllers
         {
             var currentUser = UserInfoHelper.GetUserData();
             if (ModelState.IsValid)
-                {
-                    viewModel.IsActive = true;
-                    viewModel.CreatedBy = currentUser.UserId;
-                    viewModel.CreatedAt = DateTime.Now;
-                    db.Set<Rent>().Add(viewModel);
-                    db.SaveChanges();
-                    ViewBag.StartupScript = "create_success();";
-                    return View(viewModel);
+            {
+                viewModel.IsActive = true;
+                viewModel.CreatedBy = currentUser.UserId;
+                viewModel.CreatedAt = DateTime.Now;
+                db.Set<Rent>().Add(viewModel);
+                db.SaveChanges();
+                ViewBag.StartupScript = "create_success();";
+                return View(viewModel);
             }
             else
             {
@@ -98,102 +98,35 @@ namespace WEB.Areas.Admin.Controllers
         }
         public ActionResult Edit(int id)
         {
-            var model = db.Set<Product>().Find(id);
-            var config = new MapperConfiguration(cfg => cfg.CreateMap<Product, ProductViewModel>());
-            IMapper iMapper = config.CreateMapper();
-            var viewModel = iMapper.Map<ProductViewModel>(model);
-            if (model == null)
-            {
-                return HttpNotFound();
-            }
-            viewModel.ProductCode = model.ProductCode;
-            return View("Edit", viewModel);
+            var model = new Rent();
+            var product = db.Products.Where(x => x.ID == id).FirstOrDefault();
+            var count = db.Rents.Where(x => x.ProductID == id && x.Status != 1).Select(x => x.Number).AsEnumerable();
+            ViewBag.Count = (product.Number != null ? product.Number : 0) - (count != null ? count.Sum() : 0);
+            model.ProductID = id;
+            model.ProductName = product.ProductName;
+            model.ProductCode = product.ProductCode;
+            List<int> test = new List<int>();
+            var sum = test.Sum();
+            return View("Edit", model);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ValidateInput(false)]
-        public ActionResult Edit([Bind(Include = "")] ProductViewModel model)
+        public ActionResult Edit([Bind(Include = "")] Rent model)
         {
-            var oldProduct = db.Products.Where(x => x.ID == model.ID).AsNoTracking().FirstOrDefault();
-            var productChange = new List<Product>();
-            productChange.Add(oldProduct);
-            var productChangeJson = productChange.ToJson();
             var currentUser = UserInfoHelper.GetUserData();
+            var product = db.Products.Where(x => x.ID == model.ProductID).FirstOrDefault();
+            ViewBag.Count = (product.Number != null ? product.Number : 0) - db.Rents.Where(x => x.ProductID == model.ProductID).Select(x => x.Number).Sum();
             if (ModelState.IsValid)
             {
-                var temp = (from p in db.Set<Product>().AsNoTracking()
-                            where (p.ProductCode.Equals(model.ProductCode, StringComparison.OrdinalIgnoreCase) && p.IsActive && p.ProductCode != model.ProductCode)
-                            select p).FirstOrDefault();
-                if (temp != null)
-                {
-                    ModelState.AddModelError("", WebResources.CommodityIdExists);
-                    return View(model);
-                }
-                else
-                {
-                    try
-                    {
-
-                        Station modelStation = new Station
-                        {
-                            PositionOld = oldProduct.Position,
-                            PositionNew = model.Position,
-                            StationCode = model.ProductCode,
-                            StationName = model.ProductName,
-                            IsActive = true,
-                            ModifiedBy = currentUser.UserId,
-                            ModifiedAt = DateTime.Now,
-                            CreatedAt = DateTime.Now,
-                            CreatedBy = currentUser.UserId,
-                            UserChange = currentUser.FullName
-                        };
-
-                        if (modelStation.PositionNew != modelStation.PositionOld)
-                        {
-                            db.Set<Station>().Add(modelStation);
-                        }
-
-                        Product modelProduct = new Product
-                        {
-                            ID = model.ID,
-                            Information = model.Information,
-                            ProductCode = model.ProductCode,
-                            ProductName = model.ProductName,
-                            Position = model.Position,
-                            ModifiedBy = currentUser.UserId,
-                            ModifiedAt = DateTime.Now,
-                            IsActive = true
-                        };
-
-                        db.Products.Attach(modelProduct);
-                        db.Entry(modelProduct).Property(a => a.ProductCode).IsModified = true;
-                        db.Entry(modelProduct).Property(a => a.ProductName).IsModified = true;
-                        db.Entry(modelProduct).Property(a => a.Position).IsModified = true;
-                        db.Entry(modelProduct).Property(a => a.Information).IsModified = true;
-                        db.Entry(modelProduct).Property(a => a.ModifiedBy).IsModified = true;
-                        db.Entry(modelProduct).Property(a => a.ModifiedAt).IsModified = true;
-                        db.SaveChanges();
-                        LogSystem log = new LogSystem
-                        {
-                            ActiveType = DataActionTypeConstant.UPDATE_SHOP_CATEGORY_ACTION,
-                            FunctionName = DataFunctionNameConstant.UPDATE_SHOP_CATEGORY_FUNCTION,
-                            DataTable = DataTableConstant.STATION,
-                            Information = productChangeJson
-                        };
-
-                        AddLogSystem.AddLog(log);
-                        productChange.Add(modelProduct);
-                        ViewBag.StartupScript = "edit_success();";
-                        return View(model);
-
-                    }
-                    catch (Exception ex)
-                    {
-
-                        ModelState.AddModelError("", ex.Message);
-                        return View(model);
-                    }
-                }
+                model.IsActive = true;
+                model.CreatedBy = currentUser.UserId;
+                model.CreatedAt = DateTime.Now;
+                model.ModifiedAt = DateTime.Now;
+                db.Set<Rent>().Add(model);
+                db.SaveChanges();
+                ViewBag.StartupScript = "edit_success();";
+                return View(model);
             }
             else
             {

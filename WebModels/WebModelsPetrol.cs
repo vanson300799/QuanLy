@@ -79,35 +79,35 @@ namespace WebModels
         [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
         [Display(ResourceType = typeof(WebResources), Name = "ID")]
         public int ID { get; set; }
-        [Display(ResourceType = typeof(WebResources), Name = "CustomerID")]
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredCustomerID")]
-        public string ProductCode { get; set; }
 
-        [Display(ResourceType = typeof(WebResources), Name = "CustomerName")]
-        [Required(ErrorMessageResourceType = typeof(WebResources), ErrorMessageResourceName = "RequiredCustomerName")]
+        public string ProductCode { get; set; }
         public string ProductName { get; set; }
 
         [Display(ResourceType = typeof(WebResources), Name = "TaxCode")]
         public string CompanyRent { get; set; }
         [Display(ResourceType = typeof(WebResources), Name = "CustomerAddress")]
-        public int TimeRent { get; set; }
-        public int Price { get; set; }
+        public int? TimeRent { get; set; }
+        public int? Price { get; set; }
         [Display(ResourceType = typeof(WebResources), Name = "IsActive")]
         public bool IsActive { get; set; }
 
         [Display(ResourceType = typeof(WebResources), Name = "CreatedBy")]
-        public int CreatedBy { get; set; }
+        public int? CreatedBy { get; set; }
 
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "CreatedAt")]
         public DateTime? CreatedAt { get; set; }
 
         [Display(ResourceType = typeof(WebResources), Name = "ModifiedBy")]
-        public int ModifiedBy { get; set; }
+        public int? ModifiedBy { get; set; }
+        public int? Number { get; set; }
 
-        [DataType(DataType.DateTime)]
-        [Display(ResourceType = typeof(WebResources), Name = "ModifiedDate")]
         public DateTime? ModifiedAt { get; set; }
+        public int? ProductID { get; set; }
+        public int? Status { get; set; }
+        public DateTime? DeliveryTime { get; set; }
+        [ForeignKey("ProductID")]
+        public virtual Product Products { get; set; }
+
+        public int? Total { get; set; }
     }
 
     [Table("Station")]
@@ -228,6 +228,9 @@ namespace WebModels
         public DateTime? ModifiedAt { get; set; }
         public string Position { set; get; }
         public string Image { set; get; }
+        public int? Price { get; set; }
+        public int? Number { get; set; }
+
 
     }
     [Table("ListedPrice")]

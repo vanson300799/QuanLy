@@ -39,8 +39,11 @@ namespace WEB.Areas.Admin.Controllers
                             ProductName = x.ProductName,
                             Position = x.Position,
                             Information = x.Information,
-                            ModifiedAt = (DateTime)x.ModifiedAt
-                        });
+                            ModifiedAt = (DateTime)x.ModifiedAt,
+                            Price = x.Price,
+                            Number = x.Number,
+                            Rest = x.Number - (db.Rents.Where(y => y.ProductID == x.ID && y.Status != 1).Select(y => y.Number).Sum() ?? 0 )
+                        }).ToList();
             List<ProductViewModel> listproduct = new List<ProductViewModel>();
             foreach (var item in users)
             {
@@ -52,11 +55,14 @@ namespace WEB.Areas.Admin.Controllers
                     Information = item.Information,
                     ModifiedAt = item.ModifiedAt,
                     Position = item.Position,
+                    Price = item.Price,
+                    Number = item.Number,
+                    Rest = item.Rest
                 };
                 listproduct.Add(product);
             }
             var temnp = users.ToList();
-            return Json(listproduct.ToDataSourceResult(request));
+            return Json(listproduct.OrderByDescending(x=>x.Rest).ToDataSourceResult(request));
         }
 
         [AllowAnonymous]
@@ -196,7 +202,9 @@ namespace WEB.Areas.Admin.Controllers
                             Position = model.Position,
                             ModifiedBy = currentUser.UserId,
                             ModifiedAt = DateTime.Now,
-                            IsActive = true
+                            IsActive = true,
+                            Price = model.Price,
+                            Number = model.Number
                         };
 
                         db.Products.Attach(modelProduct);
@@ -206,6 +214,8 @@ namespace WEB.Areas.Admin.Controllers
                         db.Entry(modelProduct).Property(a => a.Information).IsModified = true;
                         db.Entry(modelProduct).Property(a => a.ModifiedBy).IsModified = true;
                         db.Entry(modelProduct).Property(a => a.ModifiedAt).IsModified = true;
+                        db.Entry(modelProduct).Property(a => a.Price).IsModified = true;
+                        db.Entry(modelProduct).Property(a => a.Number).IsModified = true;
                         db.SaveChanges();
                         LogSystem log = new LogSystem
                         {

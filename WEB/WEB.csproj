@@ -305,7 +305,7 @@
     <Compile Include="Areas\Admin\Controllers\NavigationController.cs" />
     <Compile Include="Areas\Admin\Controllers\ProductController.cs" />
     <Compile Include="Areas\Admin\Controllers\RentController.cs" />
-    <Compile Include="Areas\Admin\Controllers\SupplierController.cs" />
+    <Compile Include="Areas\Admin\Controllers\PaymentController.cs" />
     <Compile Include="Areas\Admin\Controllers\UploadController.cs" />
     <Compile Include="Areas\Admin\Controllers\WebCategoryController.cs" />
     <Compile Include="Areas\Admin\Controllers\RoleController.cs" />
@@ -2950,9 +2950,9 @@
     <Content Include="Areas\Admin\Views\Station\Deletes.cshtml" />
     <Content Include="Areas\Admin\Views\Station\Edit.cshtml" />
     <Content Include="Areas\Admin\Views\Station\Index.cshtml" />
-    <Content Include="Areas\Admin\Views\Supplier\Add.cshtml" />
-    <Content Include="Areas\Admin\Views\Supplier\Edit.cshtml" />
-    <Content Include="Areas\Admin\Views\Supplier\Index.cshtml" />
+    <Content Include="Areas\Admin\Views\Payment\Add.cshtml" />
+    <Content Include="Areas\Admin\Views\Payment\Edit.cshtml" />
+    <Content Include="Areas\Admin\Views\Payment\Index.cshtml" />
     <Content Include="Areas\Admin\Views\Rent\Index.cshtml" />
     <Content Include="Areas\Admin\Views\Rent\Edit.cshtml" />
     <Content Include="Areas\Admin\Views\Rent\Add.cshtml" />

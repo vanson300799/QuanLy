@@ -39,7 +39,18 @@
             @Html.TextAreaFor(m => m.Information, new { @class = "input-block-level" })
         </div>
     </div>
-
+    <div class="control-group">
+        @Html.Label("Đơn giá / ngày", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.Price, new { @class = "input-block-level" })
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.Label("Số lượng", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.Number, new { @class = "input-block-level" })
+        </div>
+    </div>
     <div class="form-actions">
         <button class="k-button" name="submit" value="0" type="submit"><i class="icon-save"></i>@Resources.Common.SaveChanges</button>
         <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>

@@ -1,0 +1,62 @@
+﻿@model List<Rent>
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutEmpty.cshtml";
+}
+@using (Html.BeginForm("Add", "Payment", new { }, FormMethod.Post, new { @id = "supplier", @enctype = "multipart/form-data", @class = "form-horizontal fix" }))
+{
+    <input type="hidden" value="@ViewBag.Data" name="lstRent"/>
+    <table style="width:100%">
+        <tr style="height: 30px; line-height: 30px;">
+            <th>Tên máy</th>
+            <th>Bên thuê</th>
+            <th>Số lượng</th>
+            <th>Đơn giá</th>
+            <th>Thời gian</th>
+            <th>Thành tiền</th>
+        </tr>
+        @foreach (var item in Model)
+        {
+            <tr style="height: 30px; line-height: 30px;">
+                <td>@item.ProductName</td>
+                <td>@item.CompanyRent</td>
+                <td>@item.Number</td>
+                <td>@string.Format("{0:#,0}", item.Products.Price) đ/1 ngày/1 máy </td>
+                <td>@item.Price Ngày</td>
+                <td>@string.Format("{0:#,0}", item.Total)</td>
+            </tr>
+        }
+        <tr style="height:30px;line-height:30px;">
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th>@string.Format("{0:#,0}", ViewBag.Total) đ </th>
+        </tr>
+    </table>
+
+    <div class="form-actions">
+        <button class="k-button" name="submit" value="0" type="submit"><i class="icon-save"></i>Thanh toán</button>
+        <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
+    </div>
+    @Html.AntiForgeryToken()
+}
+<script type="text/javascript">
+    top.winsetup("Thanh toán", 900, 430, true);
+
+    function create_success() {
+        top.winclose();
+        top.$("#grid").data("kendoGrid").dataSource.read();
+    }
+    setTimeout(function () {
+        var height = $('form').height();
+        window.parent.$(".k-window").height(height + 30);
+        $(".k-button").click(function () {
+            setTimeout(function () {
+                var height = $('form').height();
+                window.parent.$(".k-window").height(height + 30);
+            }, 100);
+        });
+    }, 1000);
+</script>

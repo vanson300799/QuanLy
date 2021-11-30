@@ -6,7 +6,7 @@
 @using (Html.BeginForm("Edit", "Product", new { cCommodityCode = ViewBag.cCommodityCode },
     FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal fix" }))
 {
-    @Html.HiddenFor(m=>m.ProductCode)
+    @Html.HiddenFor(m => m.ProductCode)
     <div class="validation-group">
         <div class="controls">
             <p class="supplier-validate">@Html.ValidationSummary(true)</p>
@@ -39,7 +39,18 @@
             @Html.TextAreaFor(m => m.Information, new { @class = "input-block-level" })
         </div>
     </div>
-
+    <div class="control-group">
+        @Html.Label("Đơn giá / ngày", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.Price, new { @class = "input-block-level" })
+        </div>
+    </div>
+    <div class="control-group">
+        @Html.Label("Số lượng", new { @class = "control-label" })
+        <div class="controls">
+            @Html.TextBoxFor(m => m.Number, new { @class = "input-block-level" })
+        </div>
+    </div>
     <div class="form-actions">
         <button class="k-button" type="submit" id="subform"><i class="icon-save"></i>@Resources.Common.SaveChanges</button>
         <button class="k-button destroy" type="reset">@WebModels.WebResources.Cancel</button>
